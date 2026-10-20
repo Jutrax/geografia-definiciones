@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Geografía — Definiciones</title>
+<style>
+  :root {
+    --bg: #f4f7fb;
+    --card: #ffffff;
+    --ink: #1f2a44;
+    --muted: #6b7794;
+    --line: #e1e7f0;
+    --accent: #4f6bed;
+    --accent-soft: #e8ecff;
+    --ok: #1f9d63;
+    --ok-soft: #e0f6ec;
+    --bad: #d64545;
+    --bad-soft: #fde6e6;
+    --shadow: 0 8px 30px rgba(31, 42, 68, .08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141a2b; --card: #1d2640; --ink: #e8ecf7; --muted: #9aa6c4; --line: #2e3a5c;
+      --accent: #7c93ff; --accent-soft: #28345c; --ok: #4fd69a; --ok-soft: #17382c;
+      --bad: #ff7b7b; --bad-soft: #3e2023; --shadow: 0 8px 30px rgba(0,0,0,.35);
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding-block: 24px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  h1 {
+    text-align: center;
+    font-size: clamp(1.3rem, 4vw, 1.8rem);
+    letter-spacing: .08em;
+    margin: 8px 0 18px;
+  }
+  .tabs {
+    display: flex; gap: 8px; background: var(--card);
+    padding: 6px; border-radius: 16px; box-shadow: var(--shadow);
+    margin-bottom: 18px;
+  }
+  .tab {
+    flex: 1; border: 0; background: transparent; color: var(--muted);
+    padding: 12px 8px; border-radius: 12px; font-size: 1rem; font-weight: 600;
+    cursor: pointer; transition: all .2s;
+  }
+  .tab:hover { background: var(--accent-soft); }
+  .tab.active { background: var(--accent); color: #fff; box-shadow: 0 4px 12px rgba(79,107,237,.35); }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+  .stat {
+    background: var(--card); border-radius: 14px; padding: 10px 6px;
+    text-align: center; box-shadow: var(--shadow);
+  }
+  .stat b { display: block; font-size: 1.4rem; }
+  .stat span { font-size: .72rem; color: var(--muted); }
+  .stat.ok b { color: var(--ok); }
+  .stat.bad b { color: var(--bad); }
+
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .chip {
+    border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    padding: 8px 14px; border-radius: 999px; font-size: .88rem; cursor: pointer;
+    transition: all .2s;
+  }
+  .chip:hover { border-color: var(--accent); }
+  .chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .chip.danger:hover { border-color: var(--bad); color: var(--bad); }
+
+  .progress { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; margin-bottom: 6px; }
+  .progress > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), #7c93ff); transition: width .4s; }
+  .qnum { color: var(--muted); font-size: .88rem; margin-bottom: 12px; display: flex; justify-content: space-between; }
+
+  .card {
+    background: var(--card); border-radius: 22px; padding: clamp(20px, 5vw, 36px);
+    box-shadow: var(--shadow); animation: pop .35s ease;
+  }
+  @keyframes pop { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  .group { font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; color: var(--accent); font-weight: 700; }
+  .definition {
+    font-size: clamp(1.1rem, 3.2vw, 1.5rem); line-height: 1.55; margin: 10px 0 24px;
+    font-weight: 500; text-align: center;
+  }
+  .options { display: grid; gap: 10px; }
+  .opt {
+    border: 2px solid var(--line); background: var(--card); color: var(--ink);
+    border-radius: 14px; padding: 14px 16px; font-size: 1rem; text-align: left;
+    cursor: pointer; transition: all .15s;
+  }
+  .opt:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-soft); transform: translateX(3px); }
+  .opt:disabled { cursor: default; }
+  .opt.correct { border-color: var(--ok); background: var(--ok-soft); color: var(--ok); font-weight: 700; }
+  .opt.wrong { border-color: var(--bad); background: var(--bad-soft); color: var(--bad); font-weight: 700; animation: shake .3s; }
+  @keyframes shake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+  .answer-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .answer-row input {
+    flex: 1; min-width: 180px; padding: 14px 16px; font-size: 1rem; background: var(--card); color: var(--ink);
+    border: 2px solid var(--line); border-radius: 14px; outline: none; transition: border-color .2s;
+  }
+  .answer-row input:focus { border-color: var(--accent); }
+  .btn {
+    border: 0; background: var(--accent); color: #fff; font-weight: 700; font-size: 1rem;
+    padding: 14px 22px; border-radius: 14px; cursor: pointer; transition: all .15s;
+  }
+  .btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
+  .btn.secondary { background: var(--accent-soft); color: var(--accent); }
+
+  .feedback { margin-top: 18px; font-weight: 700; font-size: 1.05rem; min-height: 1.5em; }
+  .feedback.ok { color: var(--ok); }
+  .feedback.bad { color: var(--bad); }
+  .next { margin-top: 16px; text-align: right; }
+
+  .done { text-align: center; }
+  .done h2 { font-size: 1.8rem; margin: 0 0 16px; }
+  .done .stats { margin: 16px 0 22px; grid-template-columns: repeat(3, 1fr); }
+  .empty { text-align: center; color: var(--muted); }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>GEOGRAFÍA — DEFINICIONES</h1>
+
+  <div class="tabs">
+    <button class="tab" id="tab-test">Fase 1: Test</button>
+    <button class="tab" id="tab-write">Fase 2: Escribir</button>
+  </div>
+
+  <div class="stats">
+    <div class="stat ok"><b id="s-ok">0</b><span>Acertadas</span></div>
+    <div class="stat bad"><b id="s-bad">0</b><span>Falladas</span></div>
+    <div class="stat"><b id="s-pct">0%</b><span>Aciertos</span></div>
+    <div class="stat"><b id="s-total">0</b><span>Respondidas</span></div>
+  </div>
+
+  <div class="toolbar">
+    <button class="chip" id="btn-failed">Solo falladas (<span id="failed-count">0</span>)</button>
+    <button class="chip" id="btn-round">Nueva ronda</button>
+    <button class="chip danger" id="btn-reset">Reiniciar estadísticas</button>
+  </div>
+
+  <div class="progress"><div id="bar"></div></div>
+  <div class="qnum"><span id="qnum"></span><span id="qprog"></span></div>
+
+  <div class="card" id="card"></div>
+</div>
+
+<script>
+// Definiciones tal cual las dio la profesora (no modificar).
+const DEFS = [
+  // GENERALES
+  ["Generales", "Cambio climático", "variación en los elementos del clima de la Tierra que puede tener causas naturales y humanas"],
+  ["Generales", "Desarrollo sostenible", "enfoque que busca satisfacer las necesidades actuales sin comprometer la capacidad de las futuras generaciones."],
+  ["Generales", "Escala de un mapa", "en cartografía, la relación que existe entre las dimensiones de lo representado en un mapa y la realidad."],
+  ["Generales", "Globalización", "proceso económico, social, político, tecnológico y cultural a escala planetaria, caracterizado por una progresiva integración e interacción entre los países, las personas y las instituciones."],
+  ["Generales", "Latitud geográfica", "distancia angular medida en grados, minutos y segundos entre cualquier punto de la Tierra y el paralelo 0 (Ecuador). Por lo tanto, siempre será Norte o Sur."],
+  ["Generales", "Longitud geográfica", "distancia angular medida en grados, minutos y segundos entre cualquier punto de la Tierra y el meridiano 0 (Greenwich). Por lo tanto, siempre será Este u Oeste."],
+  ["Generales", "Mapa temático", "mapa que se centra en un tema específico, como el clima, la vegetación, o la densidad de población. Se diferencia de los mapas generales, que incluyen una gran variedad de elementos."],
+  ["Generales", "Mapa topográfico", "mapa que muestra la forma del terreno y las características geográficas de una región. Representa la superficie terrestre en tres dimensiones, incluyendo los elementos naturales y artificiales."],
+  ["Generales", "Meridiano", "semicírculos imaginarios que van de Polo a Polo, dirección Norte-Sur. El meridiano 0º es el de Greenwich."],
+  ["Generales", "Nudo", "unidad de medida de velocidad que se utiliza para medir la rapidez de las corrientes marinas y aéreas."],
+  ["Generales", "Objetivos del desarrollo sostenible", "conjunto de metas orientadas a erradicar la pobreza, proteger el planeta y asegurar la prosperidad para todos."],
+  ["Generales", "Ordenación del territorio", "política pública que busca mejorar la distribución de los espacios y el uso del territorio."],
+  ["Generales", "Paisaje geográfico", "parte de la superficie terrestre que tiene características propias, resultado de la interacción entre la naturaleza y los seres humanos."],
+  ["Generales", "Paralelo", "círculos imaginarios perpendiculares al eje de la Tierra, por lo tanto en dirección Este-Oeste. El Ecuador es el meridiano 0º."],
+  ["Generales", "Sistemas de información geográfica", "es un sistema informático que analiza y muestra datos geográficos."],
+  // TEMA RELIEVE
+  ["Tema relieve", "Altitud", "distancia vertical de un punto de la superficie terrestre respecto al nivel del mar."],
+  ["Tema relieve", "Archipiélago", "conjunto de islas agrupadas en un área más o menos extensa de mar u océano."],
+  ["Tema relieve", "Bahía", "entrante costero formado por la erosión del mar. Es más grande que las calas y más pequeñas que los golfos."],
+  ["Tema relieve", "Cordillera", "conjunto de montañas enlazadas entre sí. Es mayor que una sierra."],
+  ["Tema relieve", "Cuenca sedimentaria", "terreno situado a nivel inferior al de la superficie marina limitado por montañas. Surgió en la Era Terciaria y está rellenada con sedimentos aportados generalmente por un río."],
+  ["Tema relieve", "Delta fluvial", "saliente costero en forma de triángulo que aparece en la desembocadura de los ríos cuando el mar no puede redistribuir los sedimentos."],
+  ["Tema relieve", "Isohipsas", "líneas imaginarias que unen puntos de un relieve situados a la misma altura sobre el nivel del mar."],
+  ["Tema relieve", "Litoral", "constituye el área de transición entre los sistemas terrestres y los marinos."],
+  ["Tema relieve", "Marisma", "terreno bajo y fangoso con plantas herbáceas la cual está inundada por agua dulce o salada."],
+  ["Tema relieve", "Meseta", "superficie llana o ligeramente inclinada situada a una cierta altitud sobre el nivel del mar."],
+  ["Tema relieve", "Morfología cárstica", "forma de relieve originada por descomposición química de determinadas rocas (caliza, yeso, etc.), compuestas por minerales solubles en agua."],
+  ["Tema relieve", "Península", "superficie terrestre rodeada por el agua excepto por una zona estrecha (istmo) que la comunica con otra superficie de mayor extensión."],
+  ["Tema relieve", "Rambla", "cauce normalmente seco, en ámbitos semiáridos o áridos, y que presenta aguas corrientes cuando ocurren precipitaciones."],
+  ["Tema relieve", "Relieve alpino", "conjunto de accidentes geográficos que tienen su origen con la orogenia alpina."],
+  ["Tema relieve", "Relieve herciniano", "conjunto de accidentes geográficos creados por la orogenia herciniana en la Era Paleozoica. Se plegaron los materiales depositados en los profundos mares que cubrían gran parte de la futura Península y que constituían el núcleo final de la Meseta."],
+  ["Tema relieve", "Zócalo", "mesetas o llanuras formadas por la erosión de cordilleras antiguas. Al ser la base de dichas cordilleras está compuesto de materiales antiguos y duros."]
+].map(([group, concept, definition], id) => ({ id, group, concept, definition }));
+
+const KEY = "geo-defs-v1";
+const $ = id => document.getElementById(id);
+
+// ---------- Estado ----------
+let S = { mode: "test", onlyFailed: false, ok: 0, bad: 0, failed: [],
+          round: { queue: [], idx: 0, ok: 0, bad: 0, last: null, done: false } };
+let answered = false;   // ¿la pregunta actual ya se ha respondido?
+let options = [];       // opciones de la pregunta actual (Fase 1)
+
+function load() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(KEY));
+    if (raw && typeof raw === "object") {
+      S = Object.assign(S, raw);
+      S.round = Object.assign({ queue: [], idx: 0, ok: 0, bad: 0, last: null, done: false }, raw.round);
+    }
+  } catch (e) { /* sin localStorage: se sigue sin guardar */ }
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+// ---------- Utilidades ----------
+function shuffle(a) {
+  a = a.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function norm(s) {
+  return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+          .replace(/[^a-z0-9ñ ]/g, " ").replace(/\s+/g, " ").trim();
+}
+const byId = id => DEFS[id];
+
+// ---------- Rondas ----------
+function newRound() {
+  const pool = S.onlyFailed ? S.failed.filter(id => byId(id)) : DEFS.map(d => d.id);
+  let q = shuffle(pool);
+  // Evitar repetir la última definición vista justo al empezar
+  if (q.length > 1 && q[0] === S.round.last) {
+    const k = 1 + Math.floor(Math.random() * (q.length - 1));
+    [q[0], q[k]] = [q[k], q[0]];
+  }
+  S.round = { queue: q, idx: 0, ok: 0, bad: 0, last: S.round.last, done: false };
+  save();
+  render();
+}
+
+function currentQ() { return byId(S.round.queue[S.round.idx]); }
+
+// ---------- Render ----------
+function renderStats() {
+  const total = S.ok + S.bad;
+  $("s-ok").textContent = S.ok;
+  $("s-bad").textContent = S.bad;
+  $("s-pct").textContent = total ? Math.round(S.ok / total * 100) + "%" : "0%";
+  $("s-total").textContent = total;
+  $("failed-count").textContent = S.failed.length;
+  $("btn-failed").classList.toggle("on", S.onlyFailed);
+  $("tab-test").classList.toggle("active", S.mode === "test");
+  $("tab-write").classList.toggle("active", S.mode === "write");
+}
+
+function renderProgress() {
+  const n = S.round.queue.length;
+  const done = Math.min(S.round.idx + (answered ? 1 : 0), n);
+  $("bar").style.width = (n ? done / n * 100 : 0) + "%";
+  $("qnum").textContent = (!S.round.done && n) ? "Pregunta " + (S.round.idx + 1) : "";
+  $("qprog").textContent = n ? done + " / " + n + (S.onlyFailed ? " (solo falladas)" : "") : "";
+}
+
+function render() {
+  answered = false;
+  renderStats();
+  const card = $("card");
+  card.style.animation = "none"; void card.offsetWidth; card.style.animation = "";
+  card.innerHTML = "";
+
+  if (!S.round.queue.length) {
+    card.innerHTML = '<div class="empty"><h2>' +
+      (S.onlyFailed ? "No tienes preguntas falladas 🎉" : "Sin preguntas") +
+      '</h2><p>' + (S.onlyFailed ? "Desactiva «Solo falladas» para practicar todas." : "") + '</p></div>';
+    renderProgress();
+    return;
+  }
+  if (S.round.done || S.round.idx >= S.round.queue.length) { renderDone(); return; }
+
+  const q = currentQ();
+  const g = document.createElement("div"); g.className = "group"; g.textContent = q.group;
+  const d = document.createElement("div"); d.className = "definition"; d.textContent = q.definition;
+  card.append(g, d);
+
+  if (S.mode === "test") renderTest(card, q); else renderWrite(card, q);
+
+  const fb = document.createElement("div"); fb.className = "feedback"; fb.id = "fb";
+  const nx = document.createElement("div"); nx.className = "next hidden"; nx.id = "next";
+  const btn = document.createElement("button"); btn.className = "btn"; btn.id = "btn-next";
+  btn.textContent = S.round.idx + 1 >= S.round.queue.length ? "Ver resultado" : "Siguiente";
+  btn.onclick = next;
+  nx.append(btn);
+  card.append(fb, nx);
+  renderProgress();
+}
+
+function renderTest(card, q) {
+  const others = shuffle(DEFS.filter(x => x.id !== q.id)).slice(0, 3);
+  options = shuffle([q, ...others]);
+  const box = document.createElement("div"); box.className = "options";
+  options.forEach(o => {
+    const b = document.createElement("button");
+    b.className = "opt"; b.textContent = o.concept; b.dataset.id = o.id;
+    b.onclick = () => answerTest(o.id, box);
+    box.append(b);
+  });
+  card.append(box);
+}
+
+function renderWrite(card, q) {
+  const row = document.createElement("div"); row.className = "answer-row";
+  const inp = document.createElement("input");
+  inp.type = "text"; inp.id = "inp"; inp.placeholder = "Escribe el concepto…";
+  inp.autocomplete = "off"; inp.autocapitalize = "off"; inp.spellcheck = false;
+  const b = document.createElement("button"); b.className = "btn"; b.id = "btn-check"; b.textContent = "Comprobar";
+  b.onclick = checkWrite;
+  row.append(inp, b);
+  card.append(row);
+  setTimeout(() => inp.focus(), 50);
+}
+
+function renderDone() {
+  const r = S.round, t = r.ok + r.bad;
+  const pct = t ? Math.round(r.ok / t * 100) : 0;
+  $("card").innerHTML =
+    '<div class="done"><h2>¡Ronda completada! 🎉</h2>' +
+    '<div class="stats"><div class="stat ok"><b>' + r.ok + '</b><span>Aciertos</span></div>' +
+    '<div class="stat bad"><b>' + r.bad + '</b><span>Fallos</span></div>' +
+    '<div class="stat"><b>' + pct + '%</b><span>Porcentaje</span></div></div>' +
+    '<button class="btn" id="btn-again">Nueva ronda</button></div>';
+  $("btn-again").onclick = newRound;
+  $("bar").style.width = "100%";
+  $("qnum").textContent = "";
+  $("qprog").textContent = r.queue.length + " / " + r.queue.length;
+}
+
+// ---------- Respuestas ----------
+function record(correct, id) {
+  answered = true;
+  if (correct) { S.ok++; S.round.ok++; S.failed = S.failed.filter(x => x !== id); }
+  else { S.bad++; S.round.bad++; if (!S.failed.includes(id)) S.failed.push(id); }
+  S.round.last = id;
+  save();
+  renderStats();
+  renderProgress();
+  $("next").classList.remove("hidden");
+  $("btn-next").focus();
+}
+
+function feedback(ok, q) {
+  const fb = $("fb");
+  fb.className = "feedback " + (ok ? "ok" : "bad");
+  fb.textContent = ok ? "¡Correcto!" : "Incorrecto. La respuesta correcta es: " + q.concept;
+}
+
+function answerTest(chosenId, box) {
+  if (answered) return;
+  const q = currentQ();
+  const ok = chosenId === q.id;
+  box.querySelectorAll(".opt").forEach(b => {
+    b.disabled = true;
+    if (+b.dataset.id === q.id) b.classList.add("correct");
+    else if (+b.dataset.id === chosenId) b.classList.add("wrong");
+  });
+  feedback(ok, q);
+  record(ok, q.id);
+}
+
+function checkWrite() {
+  if (answered) return;
+  const inp = $("inp");
+  if (!inp.value.trim()) { inp.focus(); return; }
+  const q = currentQ();
+  const ok = norm(inp.value) === norm(q.concept);
+  inp.disabled = true;
+  $("btn-check").disabled = true;
+  inp.style.borderColor = ok ? "var(--ok)" : "var(--bad)";
+  feedback(ok, q);
+  record(ok, q.id);
+}
+
+function next() {
+  if (S.round.idx + 1 >= S.round.queue.length) { S.round.idx = S.round.queue.length; S.round.done = true; }
+  else S.round.idx++;
+  save();
+  render();
+}
+
+// ---------- Eventos ----------
+function setMode(m) { S.mode = m; save(); render(); }
+$("tab-test").onclick = () => setMode("test");
+$("tab-write").onclick = () => setMode("write");
+
+$("btn-failed").onclick = () => { S.onlyFailed = !S.onlyFailed; newRound(); };
+$("btn-round").onclick = newRound;
+let resetTimer = null;
+$("btn-reset").onclick = () => {
+  const b = $("btn-reset");
+  if (!resetTimer) {
+    b.textContent = "¿Seguro? Pulsa otra vez";
+    resetTimer = setTimeout(() => { b.textContent = "Reiniciar estadísticas"; resetTimer = null; }, 4000);
+    return;
+  }
+  clearTimeout(resetTimer); resetTimer = null; b.textContent = "Reiniciar estadísticas";
+  S.ok = 0; S.bad = 0; S.failed = []; S.onlyFailed = false; S.round.last = null;
+  newRound();
+};
+
+document.addEventListener("keydown", e => {
+  if (e.key !== "Enter") return;
+  if (S.mode === "write" && !S.round.done && S.round.queue.length) {
+    e.preventDefault();
+    if (!answered) checkWrite(); else next();
+  } else if (answered && document.activeElement.id !== "btn-next") {
+    next();
+  }
+});
+
+// ---------- Inicio ----------
+load();
+const valid = S.round.queue.length && S.round.queue.every(id => byId(id));
+if (valid) render(); else newRound();
+</script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Geografía — Definiciones</title>
+<style>
+  :root {
+    --bg: #f4f7fb;
+    --card: #ffffff;
+    --ink: #1f2a44;
+    --muted: #6b7794;
+    --line: #e1e7f0;
+    --accent: #4f6bed;
+    --accent-soft: #e8ecff;
+    --ok: #1f9d63;
+    --ok-soft: #e0f6ec;
+    --bad: #d64545;
+    --bad-soft: #fde6e6;
+    --shadow: 0 8px 30px rgba(31, 42, 68, .08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141a2b; --card: #1d2640; --ink: #e8ecf7; --muted: #9aa6c4; --line: #2e3a5c;
+      --accent: #7c93ff; --accent-soft: #28345c; --ok: #4fd69a; --ok-soft: #17382c;
+      --bad: #ff7b7b; --bad-soft: #3e2023; --shadow: 0 8px 30px rgba(0,0,0,.35);
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding-block: 24px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  h1 {
+    text-align: center;
+    font-size: clamp(1.3rem, 4vw, 1.8rem);
+    letter-spacing: .08em;
+    margin: 8px 0 18px;
+  }
+  .tabs {
+    display: flex; gap: 8px; background: var(--card);
+    padding: 6px; border-radius: 16px; box-shadow: var(--shadow);
+    margin-bottom: 18px;
+  }
+  .tab {
+    flex: 1; border: 0; background: transparent; color: var(--muted);
+    padding: 12px 8px; border-radius: 12px; font-size: 1rem; font-weight: 600;
+    cursor: pointer; transition: all .2s;
+  }
+  .tab:hover { background: var(--accent-soft); }
+  .tab.active { background: var(--accent); color: #fff; box-shadow: 0 4px 12px rgba(79,107,237,.35); }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+  .stat {
+    background: var(--card); border-radius: 14px; padding: 10px 6px;
+    text-align: center; box-shadow: var(--shadow);
+  }
+  .stat b { display: block; font-size: 1.4rem; }
+  .stat span { font-size: .72rem; color: var(--muted); }
+  .stat.ok b { color: var(--ok); }
+  .stat.bad b { color: var(--bad); }
+
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .chip {
+    border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    padding: 8px 14px; border-radius: 999px; font-size: .88rem; cursor: pointer;
+    transition: all .2s;
+  }
+  .chip:hover { border-color: var(--accent); }
+  .chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .chip.danger:hover { border-color: var(--bad); color: var(--bad); }
+
+  .progress { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; margin-bottom: 6px; }
+  .progress > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), #7c93ff); transition: width .4s; }
+  .qnum { color: var(--muted); font-size: .88rem; margin-bottom: 12px; display: flex; justify-content: space-between; }
+
+  .card {
+    background: var(--card); border-radius: 22px; padding: clamp(20px, 5vw, 36px);
+    box-shadow: var(--shadow); animation: pop .35s ease;
+  }
+  @keyframes pop { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  .group { font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; color: var(--accent); font-weight: 700; }
+  .definition {
+    font-size: clamp(1.1rem, 3.2vw, 1.5rem); line-height: 1.55; margin: 10px 0 24px;
+    font-weight: 500; text-align: center;
+  }
+  .options { display: grid; gap: 10px; }
+  .opt {
+    border: 2px solid var(--line); background: var(--card); color: var(--ink);
+    border-radius: 14px; padding: 14px 16px; font-size: 1rem; text-align: left;
+    cursor: pointer; transition: all .15s;
+  }
+  .opt:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-soft); transform: translateX(3px); }
+  .opt:disabled { cursor: default; }
+  .opt.correct { border-color: var(--ok); background: var(--ok-soft); color: var(--ok); font-weight: 700; }
+  .opt.wrong { border-color: var(--bad); background: var(--bad-soft); color: var(--bad); font-weight: 700; animation: shake .3s; }
+  @keyframes shake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+  .answer-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .answer-row input {
+    flex: 1; min-width: 180px; padding: 14px 16px; font-size: 1rem; background: var(--card); color: var(--ink);
+    border: 2px solid var(--line); border-radius: 14px; outline: none; transition: border-color .2s;
+  }
+  .answer-row input:focus { border-color: var(--accent); }
+  .btn {
+    border: 0; background: var(--accent); color: #fff; font-weight: 700; font-size: 1rem;
+    padding: 14px 22px; border-radius: 14px; cursor: pointer; transition: all .15s;
+  }
+  .btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
+  .btn.secondary { background: var(--accent-soft); color: var(--accent); }
+
+  .feedback { margin-top: 18px; font-weight: 700; font-size: 1.05rem; min-height: 1.5em; }
+  .feedback.ok { color: var(--ok); }
+  .feedback.bad { color: var(--bad); }
+  .next { margin-top: 16px; text-align: right; }
+
+  .done { text-align: center; }
+  .done h2 { font-size: 1.8rem; margin: 0 0 16px; }
+  .done .stats { margin: 16px 0 22px; grid-template-columns: repeat(3, 1fr); }
+  .empty { text-align: center; color: var(--muted); }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>GEOGRAFÍA — DEFINICIONES</h1>
+
+  <div class="tabs">
+    <button class="tab" id="tab-test">Fase 1: Test</button>
+    <button class="tab" id="tab-write">Fase 2: Escribir</button>
+  </div>
+
+  <div class="stats">
+    <div class="stat ok"><b id="s-ok">0</b><span>Acertadas</span></div>
+    <div class="stat bad"><b id="s-bad">0</b><span>Falladas</span></div>
+    <div class="stat"><b id="s-pct">0%</b><span>Aciertos</span></div>
+    <div class="stat"><b id="s-total">0</b><span>Respondidas</span></div>
+  </div>
+
+  <div class="toolbar">
+    <button class="chip" id="btn-failed">Solo falladas (<span id="failed-count">0</span>)</button>
+    <button class="chip" id="btn-round">Nueva ronda</button>
+    <button class="chip danger" id="btn-reset">Reiniciar estadísticas</button>
+  </div>
+
+  <div class="progress"><div id="bar"></div></div>
+  <div class="qnum"><span id="qnum"></span><span id="qprog"></span></div>
+
+  <div class="card" id="card"></div>
+</div>
+
+<script>
+// Definiciones tal cual las dio la profesora (no modificar).
+const DEFS = [
+  // GENERALES
+  ["Generales", "Cambio climático", "variación en los elementos del clima de la Tierra que puede tener causas naturales y humanas"],
+  ["Generales", "Desarrollo sostenible", "enfoque que busca satisfacer las necesidades actuales sin comprometer la capacidad de las futuras generaciones."],
+  ["Generales", "Escala de un mapa", "en cartografía, la relación que existe entre las dimensiones de lo representado en un mapa y la realidad."],
+  ["Generales", "Globalización", "proceso económico, social, político, tecnológico y cultural a escala planetaria, caracterizado por una progresiva integración e interacción entre los países, las personas y las instituciones."],
+  ["Generales", "Latitud geográfica", "distancia angular medida en grados, minutos y segundos entre cualquier punto de la Tierra y el paralelo 0 (Ecuador). Por lo tanto, siempre será Norte o Sur."],
+  ["Generales", "Longitud geográfica", "distancia angular medida en grados, minutos y segundos entre cualquier punto de la Tierra y el meridiano 0 (Greenwich). Por lo tanto, siempre será Este u Oeste."],
+  ["Generales", "Mapa temático", "mapa que se centra en un tema específico, como el clima, la vegetación, o la densidad de población. Se diferencia de los mapas generales, que incluyen una gran variedad de elementos."],
+  ["Generales", "Mapa topográfico", "mapa que muestra la forma del terreno y las características geográficas de una región. Representa la superficie terrestre en tres dimensiones, incluyendo los elementos naturales y artificiales."],
+  ["Generales", "Meridiano", "semicírculos imaginarios que van de Polo a Polo, dirección Norte-Sur. El meridiano 0º es el de Greenwich."],
+  ["Generales", "Nudo", "unidad de medida de velocidad que se utiliza para medir la rapidez de las corrientes marinas y aéreas."],
+  ["Generales", "Objetivos del desarrollo sostenible", "conjunto de metas orientadas a erradicar la pobreza, proteger el planeta y asegurar la prosperidad para todos."],
+  ["Generales", "Ordenación del territorio", "política pública que busca mejorar la distribución de los espacios y el uso del territorio."],
+  ["Generales", "Paisaje geográfico", "parte de la superficie terrestre que tiene características propias, resultado de la interacción entre la naturaleza y los seres humanos."],
+  ["Generales", "Paralelo", "círculos imaginarios perpendiculares al eje de la Tierra, por lo tanto en dirección Este-Oeste. El Ecuador es el meridiano 0º."],
+  ["Generales", "Sistemas de información geográfica", "es un sistema informático que analiza y muestra datos geográficos."],
+  // TEMA RELIEVE
+  ["Tema relieve", "Altitud", "distancia vertical de un punto de la superficie terrestre respecto al nivel del mar."],
+  ["Tema relieve", "Archipiélago", "conjunto de islas agrupadas en un área más o menos extensa de mar u océano."],
+  ["Tema relieve", "Bahía", "entrante costero formado por la erosión del mar. Es más grande que las calas y más pequeñas que los golfos."],
+  ["Tema relieve", "Cordillera", "conjunto de montañas enlazadas entre sí. Es mayor que una sierra."],
+  ["Tema relieve", "Cuenca sedimentaria", "terreno situado a nivel inferior al de la superficie marina limitado por montañas. Surgió en la Era Terciaria y está rellenada con sedimentos aportados generalmente por un río."],
+  ["Tema relieve", "Delta fluvial", "saliente costero en forma de triángulo que aparece en la desembocadura de los ríos cuando el mar no puede redistribuir los sedimentos."],
+  ["Tema relieve", "Isohipsas", "líneas imaginarias que unen puntos de un relieve situados a la misma altura sobre el nivel del mar."],
+  ["Tema relieve", "Litoral", "constituye el área de transición entre los sistemas terrestres y los marinos."],
+  ["Tema relieve", "Marisma", "terreno bajo y fangoso con plantas herbáceas la cual está inundada por agua dulce o salada."],
+  ["Tema relieve", "Meseta", "superficie llana o ligeramente inclinada situada a una cierta altitud sobre el nivel del mar."],
+  ["Tema relieve", "Morfología cárstica", "forma de relieve originada por descomposición química de determinadas rocas (caliza, yeso, etc.), compuestas por minerales solubles en agua."],
+  ["Tema relieve", "Península", "superficie terrestre rodeada por el agua excepto por una zona estrecha (istmo) que la comunica con otra superficie de mayor extensión."],
+  ["Tema relieve", "Rambla", "cauce normalmente seco, en ámbitos semiáridos o áridos, y que presenta aguas corrientes cuando ocurren precipitaciones."],
+  ["Tema relieve", "Relieve alpino", "conjunto de accidentes geográficos que tienen su origen con la orogenia alpina."],
+  ["Tema relieve", "Relieve herciniano", "conjunto de accidentes geográficos creados por la orogenia herciniana en la Era Paleozoica. Se plegaron los materiales depositados en los profundos mares que cubrían gran parte de la futura Península y que constituían el núcleo final de la Meseta."],
+  ["Tema relieve", "Zócalo", "mesetas o llanuras formadas por la erosión de cordilleras antiguas. Al ser la base de dichas cordilleras está compuesto de materiales antiguos y duros."]
+].map(([group, concept, definition], id) => ({ id, group, concept, definition }));
+
+const KEY = "geo-defs-v1";
+const $ = id => document.getElementById(id);
+
+// ---------- Estado ----------
+let S = { mode: "test", onlyFailed: false, ok: 0, bad: 0, failed: [],
+          round: { queue: [], idx: 0, ok: 0, bad: 0, last: null, done: false } };
+let answered = false;   // ¿la pregunta actual ya se ha respondido?
+let options = [];       // opciones de la pregunta actual (Fase 1)
+
+function load() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(KEY));
+    if (raw && typeof raw === "object") {
+      S = Object.assign(S, raw);
+      S.round = Object.assign({ queue: [], idx: 0, ok: 0, bad: 0, last: null, done: false }, raw.round);
+    }
+  } catch (e) { /* sin localStorage: se sigue sin guardar */ }
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+// ---------- Utilidades ----------
+function shuffle(a) {
+  a = a.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function norm(s) {
+  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9ñ ]/g, " ").replace(/\s+/g, " ").trim();
+}
+const byId = id => DEFS[id];
+
+// ---------- Rondas ----------
+function newRound() {
+  const pool = S.onlyFailed ? S.failed.filter(id => byId(id)) : DEFS.map(d => d.id);
+  let q = shuffle(pool);
+  // Evitar repetir la última definición vista justo al empezar
+  if (q.length > 1 && q[0] === S.round.last) {
+    const k = 1 + Math.floor(Math.random() * (q.length - 1));
+    [q[0], q[k]] = [q[k], q[0]];
+  }
+  S.round = { queue: q, idx: 0, ok: 0, bad: 0, last: S.round.last, done: false };
+  save();
+  render();
+}
+
+function currentQ() { return byId(S.round.queue[S.round.idx]); }
+
+// ---------- Render ----------
+function renderStats() {
+  const total = S.ok + S.bad;
+  $("s-ok").textContent = S.ok;
+  $("s-bad").textContent = S.bad;
+  $("s-pct").textContent = total ? Math.round(S.ok / total * 100) + "%" : "0%";
+  $("s-total").textContent = total;
+  $("failed-count").textContent = S.failed.length;
+  $("btn-failed").classList.toggle("on", S.onlyFailed);
+  $("tab-test").classList.toggle("active", S.mode === "test");
+  $("tab-write").classList.toggle("active", S.mode === "write");
+}
+
+function renderProgress() {
+  const n = S.round.queue.length;
+  const done = Math.min(S.round.idx + (answered ? 1 : 0), n);
+  $("bar").style.width = (n ? done / n * 100 : 0) + "%";
+  $("qnum").textContent = (!S.round.done && n) ? "Pregunta " + (S.round.idx + 1) : "";
+  $("qprog").textContent = n ? done + " / " + n + (S.onlyFailed ? " (solo falladas)" : "") : "";
+}
+
+function render() {
+  answered = false;
+  renderStats();
+  const card = $("card");
+  card.style.animation = "none"; void card.offsetWidth; card.style.animation = "";
+  card.innerHTML = "";
+
+  if (!S.round.queue.length) {
+    card.innerHTML = '<div class="empty"><h2>' +
+      (S.onlyFailed ? "No tienes preguntas falladas 🎉" : "Sin preguntas") +
+      '</h2><p>' + (S.onlyFailed ? "Desactiva «Solo falladas» para practicar todas." : "") + '</p></div>';
+    renderProgress();
+    return;
+  }
+  if (S.round.done || S.round.idx >= S.round.queue.length) { renderDone(); return; }
+
+  const q = currentQ();
+  const g = document.createElement("div"); g.className = "group"; g.textContent = q.group;
+  const d = document.createElement("div"); d.className = "definition"; d.textContent = q.definition;
+  card.append(g, d);
+
+  if (S.mode === "test") renderTest(card, q); else renderWrite(card, q);
+
+  const fb = document.createElement("div"); fb.className = "feedback"; fb.id = "fb";
+  const nx = document.createElement("div"); nx.className = "next hidden"; nx.id = "next";
+  const btn = document.createElement("button"); btn.className = "btn"; btn.id = "btn-next";
+  btn.textContent = S.round.idx + 1 >= S.round.queue.length ? "Ver resultado" : "Siguiente";
+  btn.onclick = next;
+  nx.append(btn);
+  card.append(fb, nx);
+  renderProgress();
+}
+
+function renderTest(card, q) {
+  const others = shuffle(DEFS.filter(x => x.id !== q.id)).slice(0, 3);
+  options = shuffle([q, ...others]);
+  const box = document.createElement("div"); box.className = "options";
+  options.forEach(o => {
+    const b = document.createElement("button");
+    b.className = "opt"; b.textContent = o.concept; b.dataset.id = o.id;
+    b.onclick = () => answerTest(o.id, box);
+    box.append(b);
+  });
+  card.append(box);
+}
+
+function renderWrite(card, q) {
+  const row = document.createElement("div"); row.className = "answer-row";
+  const inp = document.createElement("input");
+  inp.type = "text"; inp.id = "inp"; inp.placeholder = "Escribe el concepto…";
+  inp.autocomplete = "off"; inp.autocapitalize = "off"; inp.spellcheck = false;
+  const b = document.createElement("button"); b.className = "btn"; b.id = "btn-check"; b.textContent = "Comprobar";
+  b.onclick = checkWrite;
+  row.append(inp, b);
+  card.append(row);
+  setTimeout(() => inp.focus(), 50);
+}
+
+function renderDone() {
+  const r = S.round, t = r.ok + r.bad;
+  const pct = t ? Math.round(r.ok / t * 100) : 0;
+  $("card").innerHTML =
+    '<div class="done"><h2>¡Ronda completada! 🎉</h2>' +
+    '<div class="stats"><div class="stat ok"><b>' + r.ok + '</b><span>Aciertos</span></div>' +
+    '<div class="stat bad"><b>' + r.bad + '</b><span>Fallos</span></div>' +
+    '<div class="stat"><b>' + pct + '%</b><span>Porcentaje</span></div></div>' +
+    '<button class="btn" id="btn-again">Nueva ronda</button></div>';
+  $("btn-again").onclick = newRound;
+  $("bar").style.width = "100%";
+  $("qnum").textContent = "";
+  $("qprog").textContent = r.queue.length + " / " + r.queue.length;
+}
+
+// ---------- Respuestas ----------
+function record(correct, id) {
+  answered = true;
+  if (correct) { S.ok++; S.round.ok++; S.failed = S.failed.filter(x => x !== id); }
+  else { S.bad++; S.round.bad++; if (!S.failed.includes(id)) S.failed.push(id); }
+  S.round.last = id;
+  save();
+  renderStats();
+  renderProgress();
+  $("next").classList.remove("hidden");
+  $("btn-next").focus();
+}
+
+function feedback(ok, q) {
+  const fb = $("fb");
+  fb.className = "feedback " + (ok ? "ok" : "bad");
+  fb.textContent = ok ? "¡Correcto!" : "Incorrecto. La respuesta correcta es: " + q.concept;
+}
+
+function answerTest(chosenId, box) {
+  if (answered) return;
+  const q = currentQ();
+  const ok = chosenId === q.id;
+  box.querySelectorAll(".opt").forEach(b => {
+    b.disabled = true;
+    if (+b.dataset.id === q.id) b.classList.add("correct");
+    else if (+b.dataset.id === chosenId) b.classList.add("wrong");
+  });
+  feedback(ok, q);
+  record(ok, q.id);
+}
+
+function checkWrite() {
+  if (answered) return;
+  const inp = $("inp");
+  if (!inp.value.trim()) { inp.focus(); return; }
+  const q = currentQ();
+  const ok = norm(inp.value) === norm(q.concept);
+  inp.disabled = true;
+  $("btn-check").disabled = true;
+  inp.style.borderColor = ok ? "var(--ok)" : "var(--bad)";
+  feedback(ok, q);
+  record(ok, q.id);
+}
+
+function next() {
+  if (S.round.idx + 1 >= S.round.queue.length) { S.round.idx = S.round.queue.length; S.round.done = true; }
+  else S.round.idx++;
+  save();
+  render();
+}
+
+// ---------- Eventos ----------
+function setMode(m) { S.mode = m; save(); render(); }
+$("tab-test").onclick = () => setMode("test");
+$("tab-write").onclick = () => setMode("write");
+
+$("btn-failed").onclick = () => { S.onlyFailed = !S.onlyFailed; newRound(); };
+$("btn-round").onclick = newRound;
+let resetTimer = null;
+$("btn-reset").onclick = () => {
+  const b = $("btn-reset");
+  if (!resetTimer) {
+    b.textContent = "¿Seguro? Pulsa otra vez";
+    resetTimer = setTimeout(() => { b.textContent = "Reiniciar estadísticas"; resetTimer = null; }, 4000);
+    return;
+  }
+  clearTimeout(resetTimer); resetTimer = null; b.textContent = "Reiniciar estadísticas";
+  S.ok = 0; S.bad = 0; S.failed = []; S.onlyFailed = false; S.round.last = null;
+  newRound();
+};
+
+document.addEventListener("keydown", e => {
+  if (e.key !== "Enter") return;
+  if (S.mode === "write" && !S.round.done && S.round.queue.length) {
+    e.preventDefault();
+    if (!answered) checkWrite(); else next();
+  } else if (answered && document.activeElement.id !== "btn-next") {
+    next();
+  }
+});
+
+// ---------- Inicio ----------
+load();
+const valid = S.round.queue.length && S.round.queue.every(id => byId(id));
+if (valid) render(); else newRound();
+</script>
+</body>
+</html>
