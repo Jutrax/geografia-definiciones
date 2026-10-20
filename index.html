@@ -74,6 +74,14 @@
   }
   .chip:hover { border-color: var(--accent); }
   .chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .nav { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-top: 14px; }
+  .nav label { display: flex; align-items: center; gap: 8px; font-size: .85rem; color: var(--muted); }
+  .nav select {
+    background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 10px;
+    padding: 7px 10px; font-size: .9rem; cursor: pointer;
+  }
+  .chip:disabled { opacity: .4; cursor: default; }
+  body.reviewing .nav { display: none; }
   #timer { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--accent); }
   .done p { color: var(--muted); margin: -8px 0 20px; }
   .lbl { align-self: center; font-size: .85rem; color: var(--muted); }
@@ -197,6 +205,11 @@
   <div class="qnum"><span id="qnum"></span><span id="timer"></span><span id="qprog"></span></div>
 
   <div class="card" id="card"></div>
+  <div class="nav hidden" id="nav">
+    <button class="chip" id="btn-prev">← Anterior</button>
+    <label>Ir a la pregunta <select id="jump"></select></label>
+    <button class="chip" id="btn-fwd">Siguiente →</button>
+  </div>
   <div class="card" id="review"></div>
 </div>
 
@@ -278,7 +291,7 @@ const $ = id => document.getElementById(id);
 
 // ---------- Estado ----------
 let S = { mode: "test", topic: "all", showPics: true, timed: false, hardFormat: "test", hard: [], right: [], onlyFailed: false, ok: 0, bad: 0, failed: [],
-          round: { queue: [], idx: 0, ok: 0, bad: 0, time: 0, timedN: 0, last: null, done: false } };
+          round: { queue: [], idx: 0, ok: 0, bad: 0, time: 0, timedN: 0, res: {}, last: null, done: false } };
 let answered = false;   // ¿la pregunta actual ya se ha respondido?
 let options = [];       // opciones de la pregunta actual (Fase 1)
 
@@ -287,7 +300,7 @@ function load() {
     const raw = JSON.parse(localStorage.getItem(KEY));
     if (raw && typeof raw === "object") {
       S = Object.assign(S, raw);
-      S.round = Object.assign({ queue: [], idx: 0, ok: 0, bad: 0, time: 0, timedN: 0, last: null, done: false }, raw.round);
+      S.round = Object.assign({ queue: [], idx: 0, ok: 0, bad: 0, time: 0, timedN: 0, res: {}, last: null, done: false }, raw.round);
     }
   } catch (e) { /* sin localStorage: se sigue sin guardar */ }
 }
@@ -339,7 +352,7 @@ function newRound() {
     const k = 1 + Math.floor(Math.random() * (q.length - 1));
     [q[0], q[k]] = [q[k], q[0]];
   }
-  S.round = { queue: q, idx: 0, ok: 0, bad: 0, time: 0, timedN: 0, last: S.round.last, done: false };
+  S.round = { queue: q, idx: 0, ok: 0, bad: 0, time: 0, timedN: 0, res: {}, last: S.round.last, done: false };
   save();
   render();
 }
@@ -370,14 +383,30 @@ function renderStats() {
 
 function renderProgress() {
   const n = S.round.queue.length;
-  const done = Math.min(S.round.idx + (answered ? 1 : 0), n);
+  const done = Object.keys(S.round.res).length;
   $("bar").style.width = (n ? done / n * 100 : 0) + "%";
   $("qnum").textContent = (!S.round.done && n) ? "Pregunta " + (S.round.idx + 1) : "";
   $("qprog").textContent = n ? done + " / " + n + (S.onlyFailed ? " (solo falladas)" : "") : "";
 }
 
+function renderNav() {
+  const r = S.round, n = r.queue.length;
+  const sel = $("jump");
+  sel.innerHTML = "";
+  r.queue.forEach((id, i) => {
+    const o = document.createElement("option"), res = r.res[id];
+    o.value = i; o.textContent = (i + 1) + (res ? (res.ok ? " ✓" : " ✗") : "");
+    sel.append(o);
+  });
+  sel.value = r.idx;
+  $("btn-prev").disabled = r.idx <= 0;
+  $("btn-fwd").disabled = r.idx >= n - 1;
+  $("nav").classList.remove("hidden");
+}
+
 function render() {
   answered = false;
+  $("nav").classList.add("hidden");
   timerReset();
   document.body.classList.remove("reviewing");
   $("btn-review").classList.remove("on");
@@ -421,22 +450,31 @@ function render() {
   const d = document.createElement("div"); d.className = "definition"; d.textContent = q.definition;
   card.append(head, d);
 
-  if (fmt() === "test") renderTest(card, q); else renderWrite(card, q);
+  const prev = S.round.res[q.id];
+  if (fmt() === "test") renderTest(card, q, prev); else renderWrite(card, q, prev);
 
   const fb = document.createElement("div"); fb.className = "feedback"; fb.id = "fb";
   const nx = document.createElement("div"); nx.className = "next hidden"; nx.id = "next";
   const btn = document.createElement("button"); btn.className = "btn"; btn.id = "btn-next";
-  btn.textContent = S.round.idx + 1 >= S.round.queue.length ? "Ver resultado" : "Siguiente";
+  const last = S.round.queue.every(id => id === q.id || S.round.res[id]);
+  btn.textContent = last ? "Ver resultado" : "Siguiente";
   btn.onclick = next;
   nx.append(btn);
   card.append(fb, nx);
+  if (prev) {
+    answered = true;
+    feedback(prev.ok, q);
+    showPic(q);
+    nx.classList.remove("hidden");
+  }
+  renderNav();
   renderProgress();
-  if (S.timed) { tActive = true; timerResume(); }
+  if (S.timed && !prev) { tActive = true; timerResume(); }
 }
 
-function renderTest(card, q) {
-  const others = shuffle(DEFS.filter(x => x.id !== q.id)).slice(0, 3);
-  options = shuffle([q, ...others]);
+function renderTest(card, q, prev) {
+  if (prev && prev.opts) options = prev.opts.map(byId);
+  else options = shuffle([q, ...shuffle(DEFS.filter(x => x.id !== q.id)).slice(0, 3)]);
   const box = document.createElement("div"); box.className = "options";
   options.forEach(o => {
     const b = document.createElement("button");
@@ -444,10 +482,15 @@ function renderTest(card, q) {
     b.onclick = () => answerTest(o.id, box);
     box.append(b);
   });
+  if (prev) box.querySelectorAll(".opt").forEach(b => {
+    b.disabled = true;
+    if (+b.dataset.id === q.id) b.classList.add("correct");
+    else if (+b.dataset.id === prev.pick) b.classList.add("wrong");
+  });
   card.append(box);
 }
 
-function renderWrite(card, q) {
+function renderWrite(card, q, prev) {
   const row = document.createElement("div"); row.className = "answer-row";
   const inp = document.createElement("input");
   inp.type = "text"; inp.id = "inp"; inp.placeholder = "Escribe el concepto…";
@@ -456,7 +499,10 @@ function renderWrite(card, q) {
   b.onclick = checkWrite;
   row.append(inp, b);
   card.append(row);
-  setTimeout(() => inp.focus(), 50);
+  if (prev) {
+    inp.value = prev.pick; inp.disabled = true; b.disabled = true;
+    inp.style.borderColor = prev.ok ? "var(--ok)" : "var(--bad)";
+  } else setTimeout(() => inp.focus(), 50);
 }
 
 function renderDone() {
@@ -476,8 +522,9 @@ function renderDone() {
 }
 
 // ---------- Respuestas ----------
-function record(correct, id) {
+function record(correct, id, pick) {
   answered = true;
+  S.round.res[id] = { ok: correct, pick, opts: fmt() === "test" ? options.map(o => o.id) : undefined };
   if (tActive) {
     const el = timerStop();
     S.round.time += el; S.round.timedN++;
@@ -532,7 +579,7 @@ function answerTest(chosenId, box) {
     else if (+b.dataset.id === chosenId) b.classList.add("wrong");
   });
   feedback(ok, q);
-  record(ok, q.id);
+  record(ok, q.id, chosenId);
 }
 
 function checkWrite() {
@@ -545,14 +592,20 @@ function checkWrite() {
   $("btn-check").disabled = true;
   inp.style.borderColor = ok ? "var(--ok)" : "var(--bad)";
   feedback(ok, q);
-  record(ok, q.id);
+  record(ok, q.id, inp.value);
+}
+
+function goTo(i) {
+  if (i < 0 || i >= S.round.queue.length) return;
+  S.round.idx = i; save(); render();
 }
 
 function next() {
-  if (S.round.idx + 1 >= S.round.queue.length) { S.round.idx = S.round.queue.length; S.round.done = true; }
-  else S.round.idx++;
-  save();
-  render();
+  const r = S.round, n = r.queue.length;
+  if (r.idx + 1 < n) { goTo(r.idx + 1); return; }
+  const pending = r.queue.findIndex(id => !r.res[id]);
+  if (pending >= 0) { goTo(pending); return; }
+  r.idx = n; r.done = true; save(); render();
 }
 
 // ---------- Revisión ----------
@@ -628,6 +681,9 @@ $("tab-test").onclick = () => setMode("test");
 $("tab-write").onclick = () => setMode("write");
 $("tab-hard").onclick = () => setMode("hard");
 $("btn-review").onclick = toggleReview;
+$("btn-prev").onclick = () => goTo(S.round.idx - 1);
+$("btn-fwd").onclick = () => goTo(S.round.idx + 1);
+$("jump").onchange = e => goTo(+e.target.value);
 $("btn-time").onclick = () => {
   S.timed = !S.timed; save(); renderStats();
   if (!S.timed) { timerReset(); }
