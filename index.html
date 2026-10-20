@@ -84,6 +84,18 @@
   .hard-toggle:hover { border-color: var(--bad); }
   .hard-toggle.on { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
   .hard-toggle input { accent-color: var(--bad); width: 16px; height: 16px; margin: 0; cursor: pointer; }
+  #review { display: none; }
+  body.reviewing #review { display: block; }
+  body.reviewing #card, body.reviewing .progress, body.reviewing .qnum { display: none; }
+  .rv-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+  .rv-row {
+    display: flex; gap: 12px; align-items: flex-start; padding: 12px 4px; cursor: pointer;
+    border-top: 1px solid var(--line);
+  }
+  .rv-row input { accent-color: var(--bad); width: 18px; height: 18px; margin: 3px 0 0; flex: none; cursor: pointer; }
+  .rv-row b { display: block; }
+  .rv-row span { display: block; font-size: .85rem; color: var(--muted); }
+  .rv-empty { color: var(--muted); text-align: center; padding: 12px 0; }
   .chip.danger:hover { border-color: var(--bad); color: var(--bad); }
 
   .progress { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; margin-bottom: 6px; }
@@ -161,6 +173,7 @@
   <div class="toolbar">
     <button class="chip" id="btn-failed">Solo falladas (<span id="failed-count">0</span>)</button>
     <button class="chip" id="btn-round">Nueva ronda</button>
+    <button class="chip" id="btn-review">Revisar acertadas y falladas</button>
     <button class="chip danger" id="btn-reset">Reiniciar estadísticas</button>
   </div>
 
@@ -181,6 +194,7 @@
   <div class="qnum"><span id="qnum"></span><span id="qprog"></span></div>
 
   <div class="card" id="card"></div>
+  <div class="card" id="review"></div>
 </div>
 
 <script>
@@ -260,7 +274,7 @@ const KEY = "geo-defs-v1";
 const $ = id => document.getElementById(id);
 
 // ---------- Estado ----------
-let S = { mode: "test", topic: "all", showPics: true, hardFormat: "test", hard: [], onlyFailed: false, ok: 0, bad: 0, failed: [],
+let S = { mode: "test", topic: "all", showPics: true, hardFormat: "test", hard: [], right: [], onlyFailed: false, ok: 0, bad: 0, failed: [],
           round: { queue: [], idx: 0, ok: 0, bad: 0, last: null, done: false } };
 let answered = false;   // ¿la pregunta actual ya se ha respondido?
 let options = [];       // opciones de la pregunta actual (Fase 1)
@@ -346,6 +360,8 @@ function renderProgress() {
 
 function render() {
   answered = false;
+  document.body.classList.remove("reviewing");
+  $("btn-review").classList.remove("on");
   renderStats();
   const card = $("card");
   card.style.animation = "none"; void card.offsetWidth; card.style.animation = "";
@@ -441,8 +457,15 @@ function renderDone() {
 // ---------- Respuestas ----------
 function record(correct, id) {
   answered = true;
-  if (correct) { S.ok++; S.round.ok++; S.failed = S.failed.filter(x => x !== id); }
-  else { S.bad++; S.round.bad++; if (!S.failed.includes(id)) S.failed.push(id); }
+  if (correct) {
+    S.ok++; S.round.ok++;
+    S.failed = S.failed.filter(x => x !== id);
+    if (!S.right.includes(id)) S.right.push(id);
+  } else {
+    S.bad++; S.round.bad++;
+    S.right = S.right.filter(x => x !== id);
+    if (!S.failed.includes(id)) S.failed.push(id);
+  }
   S.round.last = id;
   save();
   renderStats();
@@ -506,6 +529,68 @@ function next() {
   render();
 }
 
+// ---------- Revisión ----------
+let reviewTab = "failed";
+
+function renderReview() {
+  renderStats();
+  const box = $("review");
+  box.innerHTML = "";
+  const ids = (reviewTab === "failed" ? S.failed : S.right).filter(id => byId(id));
+
+  const head = document.createElement("div"); head.className = "rv-head";
+  const tabs = document.createElement("div"); tabs.className = "toolbar"; tabs.style.margin = "0";
+  [["failed", "Falladas (" + S.failed.length + ")"], ["right", "Acertadas (" + S.right.length + ")"]].forEach(([k, label]) => {
+    const b = document.createElement("button"); b.className = "chip" + (reviewTab === k ? " on" : ""); b.textContent = label;
+    b.onclick = () => { reviewTab = k; renderReview(); };
+    tabs.append(b);
+  });
+  head.append(tabs);
+
+  if (ids.length) {
+    const all = document.createElement("label"); all.className = "hard-toggle";
+    const cbAll = document.createElement("input"); cbAll.type = "checkbox";
+    cbAll.checked = ids.every(id => S.hard.includes(id));
+    all.classList.toggle("on", cbAll.checked);
+    cbAll.onchange = () => {
+      S.hard = S.hard.filter(x => !ids.includes(x));
+      if (cbAll.checked) S.hard.push(...ids);
+      save(); renderReview();
+    };
+    all.append(cbAll, "Marcar todas como difíciles");
+    head.append(all);
+  }
+  box.append(head);
+
+  if (!ids.length) {
+    const e = document.createElement("div"); e.className = "rv-empty";
+    e.textContent = reviewTab === "failed" ? "No tienes ninguna fallada." : "Todavía no has acertado ninguna.";
+    box.append(e);
+    return;
+  }
+  ids.map(byId).sort((a, b) => a.concept.localeCompare(b.concept, "es")).forEach(d => {
+    const row = document.createElement("label"); row.className = "rv-row";
+    const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = S.hard.includes(d.id);
+    cb.onchange = () => {
+      S.hard = S.hard.filter(x => x !== d.id);
+      if (cb.checked) S.hard.push(d.id);
+      save(); renderReview();
+    };
+    const txt = document.createElement("div");
+    const b = document.createElement("b"); b.textContent = d.concept;
+    const sp = document.createElement("span"); sp.textContent = d.definition;
+    txt.append(b, sp);
+    row.append(cb, txt);
+    box.append(row);
+  });
+}
+
+function toggleReview() {
+  if (document.body.classList.contains("reviewing")) { document.body.classList.remove("reviewing"); $("btn-review").classList.remove("on"); return; }
+  document.body.classList.add("reviewing"); $("btn-review").classList.add("on");
+  renderReview();
+}
+
 // ---------- Eventos ----------
 function setMode(m) {
   const involvesHard = m === "hard" || S.mode === "hard";
@@ -515,6 +600,7 @@ function setMode(m) {
 $("tab-test").onclick = () => setMode("test");
 $("tab-write").onclick = () => setMode("write");
 $("tab-hard").onclick = () => setMode("hard");
+$("btn-review").onclick = toggleReview;
 
 document.querySelectorAll("[data-topic]").forEach(b => b.onclick = () => { S.topic = b.dataset.topic; newRound(); });
 document.querySelectorAll("[data-hfmt]").forEach(b => b.onclick = () => { S.hardFormat = b.dataset.hfmt; newRound(); });
@@ -535,12 +621,12 @@ $("btn-reset").onclick = () => {
     return;
   }
   clearTimeout(resetTimer); resetTimer = null; b.textContent = "Reiniciar estadísticas";
-  S.ok = 0; S.bad = 0; S.failed = []; S.onlyFailed = false; S.round.last = null;
+  S.ok = 0; S.bad = 0; S.failed = []; S.right = []; S.onlyFailed = false; S.round.last = null;
   newRound();
 };
 
 document.addEventListener("keydown", e => {
-  if (e.key !== "Enter") return;
+  if (e.key !== "Enter" || document.body.classList.contains("reviewing")) return;
   if (fmt() === "write" && !S.round.done && S.round.queue.length) {
     e.preventDefault();
     if (!answered) checkWrite(); else next();
