@@ -119,6 +119,10 @@
   .feedback.ok { color: var(--ok); }
   .feedback.bad { color: var(--bad); }
   .next { margin-top: 16px; text-align: right; }
+  .pic { margin: 18px 0 0; text-align: center; animation: pop .4s ease; }
+  .pic img { max-width: 100%; max-height: 320px; border-radius: 14px; background: var(--accent-soft); }
+  .pic figcaption { margin-top: 6px; font-size: .8rem; color: var(--muted); }
+  .pic figcaption a { color: inherit; }
 
   .done { text-align: center; }
   .done h2 { font-size: 1.8rem; margin: 0 0 16px; }
@@ -156,6 +160,41 @@
 </div>
 
 <script>
+// Una imagen por concepto (Wikimedia Commons): [imagen, página del archivo con autor y licencia]
+const PICS = {
+  "Cambio climático": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/3/33/WMO_Global_average_temperature_anomaly_1850_2016.png/500px-WMO_Global_average_temperature_anomaly_1850_2016.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:WMO_Global_average_temperature_anomaly_1850_2016.png"],
+  "Desarrollo sostenible": ["https://upload.wikimedia.org/wikipedia/commons/f/f1/Sustainability-diagram-v3.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled", "https://commons.wikimedia.org/wiki/File:Sustainability-diagram-v3.png"],
+  "Escala de un mapa": ["https://upload.wikimedia.org/wikipedia/commons/c/cb/Graphical_scale.gif?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled", "https://commons.wikimedia.org/wiki/File:Graphical_scale.gif"],
+  "Globalización": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/f/ff/1794_Samuel_Dunn_Wall_Map_of_the_World_in_Hemispheres_-_Geographicus_-_World2-dunn-1794.jpg/500px-1794_Samuel_Dunn_Wall_Map_of_the_World_in_Hemispheres_-_Geographicus_-_World2-dunn-1794.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:1794_Samuel_Dunn_Wall_Map_of_the_World_in_Hemispheres_-_Geographicus_-_World2-dunn-1794.jpg"],
+  "Latitud geográfica": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fe/Latitude_and_Longitude_of_the_Earth_ml.png/500px-Latitude_and_Longitude_of_the_Earth_ml.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:Latitude_and_Longitude_of_the_Earth_ml.png"],
+  "Longitud geográfica": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2c/Meridians.png/500px-Meridians.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:Meridians.png"],
+  "Mapa temático": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7b/Population_density_of_Brazil_federative_units.png/500px-Population_density_of_Brazil_federative_units.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:Population_density_of_Brazil_federative_units.png"],
+  "Mapa topográfico": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/8/82/Descartes_region_topographic_map.jpg/500px-Descartes_region_topographic_map.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:Descartes_region_topographic_map.jpg"],
+  "Meridiano": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e2/Prime_Meridian_Line_of_the_world%2C_Greenwich%2C_London%2C_England_%28Ank_Kumar%2C_INFOSYS_Limited%29.jpg/500px-Prime_Meridian_Line_of_the_world%2C_Greenwich%2C_London%2C_England_%28Ank_Kumar%2C_INFOSYS_Limited%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:Prime_Meridian_Line_of_the_world,_Greenwich,_London,_England_(Ank_Kumar,_INFOSYS_Limited).jpg"],
+  "Nudo": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a4/USSFlusserDD20.jpg/500px-USSFlusserDD20.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:USSFlusserDD20.jpg"],
+  "Objetivos del desarrollo sostenible": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e4/Sdg_icon_wheel_2.png/500px-Sdg_icon_wheel_2.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:Sdg_icon_wheel_2.png"],
+  "Ordenación del territorio": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/0/09/Occupation_des_sols_en_France_en_2012%2C_Corine_Land_Cover.png/500px-Occupation_des_sols_en_France_en_2012%2C_Corine_Land_Cover.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:Occupation_des_sols_en_France_en_2012,_Corine_Land_Cover.png"],
+  "Paisaje geográfico": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1c/Zagedan_Ridge%2C_Zagedan_Valley%2C_Caucasus_Mountains%2C_Karachay-Cherkessia.jpg/500px-Zagedan_Ridge%2C_Zagedan_Valley%2C_Caucasus_Mountains%2C_Karachay-Cherkessia.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:Zagedan_Ridge,_Zagedan_Valley,_Caucasus_Mountains,_Karachay-Cherkessia.jpg"],
+  "Paralelo": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9d/Parallels_construction.png/500px-Parallels_construction.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:Parallels_construction.png"],
+  "Sistemas de información geográfica": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6c/GIS_Layers.png/500px-GIS_Layers.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:GIS_Layers.png"],
+  "Altitud": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4a/Elevation.png/500px-Elevation.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:Elevation.png"],
+  "Archipiélago": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c2/Ertholmene_aerial_view_of_3_islands_asv2024-07.jpg/500px-Ertholmene_aerial_view_of_3_islands_asv2024-07.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:Ertholmene_aerial_view_of_3_islands_asv2024-07.jpg"],
+  "Bahía": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ef/Tsukumo_Bay_Noto%2C_Ishikawa_Aerial_photograph.2010.jpg/500px-Tsukumo_Bay_Noto%2C_Ishikawa_Aerial_photograph.2010.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:Tsukumo_Bay_Noto,_Ishikawa_Aerial_photograph.2010.jpg"],
+  "Cordillera": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5a/Mountains_in_snow%2C_Mountain_lake%2C_Chola_Valley%2C_Nepal%2C_Himalayas.jpg/500px-Mountains_in_snow%2C_Mountain_lake%2C_Chola_Valley%2C_Nepal%2C_Himalayas.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:Mountains_in_snow,_Mountain_lake,_Chola_Valley,_Nepal,_Himalayas.jpg"],
+  "Cuenca sedimentaria": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e1/Parna%C3%ADba_Basin_cross_section.png/500px-Parna%C3%ADba_Basin_cross_section.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:Parna%C3%ADba_Basin_cross_section.png"],
+  "Delta fluvial": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fb/Lena_River_Delta_-_Landsat_2000.jpg/500px-Lena_River_Delta_-_Landsat_2000.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:Lena_River_Delta_-_Landsat_2000.jpg"],
+  "Isohipsas": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a2/Topographic_surveying%3B_including_geographic%2C_exploratory%2C_and_military_mapping%2C_with_hints_on_camping%2C_emergency_surgery%2C_and_photography_%281905%29_%2814782226435%29.jpg/330px-thumbnail.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:Topographic_surveying;_including_geographic,_exploratory,_and_military_mapping,_with_hints_on_camping,_emergency_surgery,_and_photography_(1905)_(14782226435).jpg"],
+  "Litoral": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/4/47/Olkhon_Island%2C_Capes%2C_cliffs_at_sunset%2C_Lake_Baikal%2C_Russia.jpg/500px-Olkhon_Island%2C_Capes%2C_cliffs_at_sunset%2C_Lake_Baikal%2C_Russia.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:Olkhon_Island,_Capes,_cliffs_at_sunset,_Lake_Baikal,_Russia.jpg"],
+  "Marisma": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6a/Marismas_de_Do%C3%B1ana.jpg/500px-Marismas_de_Do%C3%B1ana.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:Marismas_de_Do%C3%B1ana.jpg"],
+  "Meseta": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ae/El_Real_de_San_Vicente_%282000%29_05.jpg/500px-El_Real_de_San_Vicente_%282000%29_05.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:El_Real_de_San_Vicente_(2000)_05.jpg"],
+  "Morfología cárstica": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b0/Limestone_karst_landscape_of_Phang_Nga_Bay%2C_Thailand.jpg/500px-Limestone_karst_landscape_of_Phang_Nga_Bay%2C_Thailand.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:Limestone_karst_landscape_of_Phang_Nga_Bay,_Thailand.jpg"],
+  "Península": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ab/Heatwave_in_the_Iberian_Peninsula_%28Copernicus%29.jpg/500px-Heatwave_in_the_Iberian_Peninsula_%28Copernicus%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:Heatwave_in_the_Iberian_Peninsula_(Copernicus).jpg"],
+  "Rambla": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2a/River_canyon_of_Rambla_de_Perea_in_Los_Ba%C3%B1os_de_Mula%2C_R%C3%ADo_Mula%2C_Murcia%2C_Spain%2C_2025_February_-_2.jpg/330px-River_canyon_of_Rambla_de_Perea_in_Los_Ba%C3%B1os_de_Mula%2C_R%C3%ADo_Mula%2C_Murcia%2C_Spain%2C_2025_February_-_2.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:River_canyon_of_Rambla_de_Perea_in_Los_Ba%C3%B1os_de_Mula,_R%C3%ADo_Mula,_Murcia,_Spain,_2025_February_-_2.jpg"],
+  "Relieve alpino": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3b/2019_-_Parc_national_des_Pyrenees_-_Vall%C3%A9e_de_Gavarnie.jpg/500px-2019_-_Parc_national_des_Pyrenees_-_Vall%C3%A9e_de_Gavarnie.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:2019_-_Parc_national_des_Pyrenees_-_Vall%C3%A9e_de_Gavarnie.jpg"],
+  "Relieve herciniano": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9d/Variscan_belt_in_Europa.webp/500px-Variscan_belt_in_Europa.webp?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:Variscan_belt_in_Europa.webp"],
+  "Zócalo": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d2/Precambrian_peneplain_Kinnekulle.jpg/500px-Precambrian_peneplain_Kinnekulle.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:Precambrian_peneplain_Kinnekulle.jpg"]
+};
+
 // Definiciones tal cual las dio la profesora (no modificar).
 const DEFS = [
   // GENERALES
@@ -191,7 +230,7 @@ const DEFS = [
   ["Tema relieve", "Relieve alpino", "conjunto de accidentes geográficos que tienen su origen con la orogenia alpina."],
   ["Tema relieve", "Relieve herciniano", "conjunto de accidentes geográficos creados por la orogenia herciniana en la Era Paleozoica. Se plegaron los materiales depositados en los profundos mares que cubrían gran parte de la futura Península y que constituían el núcleo final de la Meseta."],
   ["Tema relieve", "Zócalo", "mesetas o llanuras formadas por la erosión de cordilleras antiguas. Al ser la base de dichas cordilleras está compuesto de materiales antiguos y duros."]
-].map(([group, concept, definition], id) => ({ id, group, concept, definition }));
+].map(([group, concept, definition], id) => ({ id, group, concept, definition, pic: PICS[concept] }));
 
 const KEY = "geo-defs-v1";
 const $ = id => document.getElementById(id);
@@ -282,6 +321,7 @@ function render() {
   if (S.round.done || S.round.idx >= S.round.queue.length) { renderDone(); return; }
 
   const q = currentQ();
+  if (q.pic) new Image().src = q.pic[0];
   const g = document.createElement("div"); g.className = "group"; g.textContent = q.group;
   const d = document.createElement("div"); d.className = "definition"; d.textContent = q.definition;
   card.append(g, d);
@@ -347,8 +387,24 @@ function record(correct, id) {
   save();
   renderStats();
   renderProgress();
+  showPic(byId(id));
   $("next").classList.remove("hidden");
   $("btn-next").focus();
+}
+
+function showPic(q) {
+  if (!q.pic) return;
+  const fig = document.createElement("figure"); fig.className = "pic";
+  const img = document.createElement("img");
+  img.src = q.pic[0]; img.alt = q.concept;
+  img.onerror = () => fig.remove();
+  const cap = document.createElement("figcaption");
+  cap.append(q.concept + " · Foto: ");
+  const a = document.createElement("a");
+  a.href = q.pic[1]; a.target = "_blank"; a.rel = "noopener"; a.textContent = "Wikimedia Commons";
+  cap.append(a);
+  fig.append(img, cap);
+  $("card").insertBefore(fig, $("next"));
 }
 
 function feedback(ok, q) {
