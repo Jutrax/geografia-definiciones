@@ -74,6 +74,8 @@
   }
   .chip:hover { border-color: var(--accent); }
   .chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  #timer { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--accent); }
+  .done p { color: var(--muted); margin: -8px 0 20px; }
   .lbl { align-self: center; font-size: .85rem; color: var(--muted); }
   .head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
   .hard-toggle {
@@ -183,6 +185,7 @@
     <button class="chip" data-topic="Generales">Generales</button>
     <button class="chip" data-topic="Tema relieve">Relieve</button>
     <button class="chip" id="btn-pics">Fotos: sí</button>
+    <button class="chip" id="btn-time">Cronómetro: no</button>
   </div>
   <div class="toolbar hidden" id="hard-format">
     <span class="lbl">Fase 3 en formato:</span>
@@ -191,7 +194,7 @@
   </div>
 
   <div class="progress"><div id="bar"></div></div>
-  <div class="qnum"><span id="qnum"></span><span id="qprog"></span></div>
+  <div class="qnum"><span id="qnum"></span><span id="timer"></span><span id="qprog"></span></div>
 
   <div class="card" id="card"></div>
   <div class="card" id="review"></div>
@@ -274,8 +277,8 @@ const KEY = "geo-defs-v1";
 const $ = id => document.getElementById(id);
 
 // ---------- Estado ----------
-let S = { mode: "test", topic: "all", showPics: true, hardFormat: "test", hard: [], right: [], onlyFailed: false, ok: 0, bad: 0, failed: [],
-          round: { queue: [], idx: 0, ok: 0, bad: 0, last: null, done: false } };
+let S = { mode: "test", topic: "all", showPics: true, timed: false, hardFormat: "test", hard: [], right: [], onlyFailed: false, ok: 0, bad: 0, failed: [],
+          round: { queue: [], idx: 0, ok: 0, bad: 0, time: 0, timedN: 0, last: null, done: false } };
 let answered = false;   // ¿la pregunta actual ya se ha respondido?
 let options = [];       // opciones de la pregunta actual (Fase 1)
 
@@ -284,7 +287,7 @@ function load() {
     const raw = JSON.parse(localStorage.getItem(KEY));
     if (raw && typeof raw === "object") {
       S = Object.assign(S, raw);
-      S.round = Object.assign({ queue: [], idx: 0, ok: 0, bad: 0, last: null, done: false }, raw.round);
+      S.round = Object.assign({ queue: [], idx: 0, ok: 0, bad: 0, time: 0, timedN: 0, last: null, done: false }, raw.round);
     }
   } catch (e) { /* sin localStorage: se sigue sin guardar */ }
 }
@@ -305,6 +308,19 @@ function norm(s) {
 }
 const byId = id => DEFS[id];
 
+// ---------- Cronómetro (opcional) ----------
+let tInt = null, tStart = 0, tAcc = 0, tRunning = false, tActive = false;
+const fmtT = ms => (ms / 1000).toFixed(1).replace(".", ",") + " s";
+function timerShow() { $("timer").textContent = "⏱ " + fmtT(tAcc + (tRunning ? performance.now() - tStart : 0)); }
+function timerReset() { clearInterval(tInt); tInt = null; tRunning = false; tActive = false; tAcc = 0; $("timer").textContent = ""; }
+function timerPause() { if (!tRunning) return; tAcc += performance.now() - tStart; tRunning = false; clearInterval(tInt); }
+function timerResume() {
+  if (!tActive || tRunning || document.hidden || document.body.classList.contains("reviewing")) return;
+  tStart = performance.now(); tRunning = true; tInt = setInterval(timerShow, 100); timerShow();
+}
+function timerStop() { timerPause(); tActive = false; return tAcc; }
+document.addEventListener("visibilitychange", () => document.hidden ? timerPause() : timerResume());
+
 // Formato de pregunta que toca: la Fase 3 usa el formato elegido aparte
 const fmt = () => S.mode === "hard" ? S.hardFormat : S.mode;
 
@@ -323,7 +339,7 @@ function newRound() {
     const k = 1 + Math.floor(Math.random() * (q.length - 1));
     [q[0], q[k]] = [q[k], q[0]];
   }
-  S.round = { queue: q, idx: 0, ok: 0, bad: 0, last: S.round.last, done: false };
+  S.round = { queue: q, idx: 0, ok: 0, bad: 0, time: 0, timedN: 0, last: S.round.last, done: false };
   save();
   render();
 }
@@ -348,6 +364,8 @@ function renderStats() {
   document.querySelectorAll("[data-topic]").forEach(b => b.classList.toggle("on", b.dataset.topic === S.topic));
   $("btn-pics").classList.toggle("on", S.showPics);
   $("btn-pics").textContent = "Fotos: " + (S.showPics ? "sí" : "no");
+  $("btn-time").classList.toggle("on", S.timed);
+  $("btn-time").textContent = "Cronómetro: " + (S.timed ? "sí" : "no");
 }
 
 function renderProgress() {
@@ -360,6 +378,7 @@ function renderProgress() {
 
 function render() {
   answered = false;
+  timerReset();
   document.body.classList.remove("reviewing");
   $("btn-review").classList.remove("on");
   renderStats();
@@ -412,6 +431,7 @@ function render() {
   nx.append(btn);
   card.append(fb, nx);
   renderProgress();
+  if (S.timed) { tActive = true; timerResume(); }
 }
 
 function renderTest(card, q) {
@@ -447,6 +467,7 @@ function renderDone() {
     '<div class="stats"><div class="stat ok"><b>' + r.ok + '</b><span>Aciertos</span></div>' +
     '<div class="stat bad"><b>' + r.bad + '</b><span>Fallos</span></div>' +
     '<div class="stat"><b>' + pct + '%</b><span>Porcentaje</span></div></div>' +
+    (r.timedN ? '<p>Tiempo medio: ' + fmtT(r.time / r.timedN) + ' por pregunta · Total: ' + fmtT(r.time) + '</p>' : '') +
     '<button class="btn" id="btn-again">Nueva ronda</button></div>';
   $("btn-again").onclick = newRound;
   $("bar").style.width = "100%";
@@ -457,6 +478,11 @@ function renderDone() {
 // ---------- Respuestas ----------
 function record(correct, id) {
   answered = true;
+  if (tActive) {
+    const el = timerStop();
+    S.round.time += el; S.round.timedN++;
+    $("timer").textContent = "⏱ " + fmtT(el);
+  }
   if (correct) {
     S.ok++; S.round.ok++;
     S.failed = S.failed.filter(x => x !== id);
@@ -586,8 +612,9 @@ function renderReview() {
 }
 
 function toggleReview() {
-  if (document.body.classList.contains("reviewing")) { document.body.classList.remove("reviewing"); $("btn-review").classList.remove("on"); return; }
+  if (document.body.classList.contains("reviewing")) { document.body.classList.remove("reviewing"); $("btn-review").classList.remove("on"); timerResume(); return; }
   document.body.classList.add("reviewing"); $("btn-review").classList.add("on");
+  timerPause();
   renderReview();
 }
 
@@ -601,6 +628,11 @@ $("tab-test").onclick = () => setMode("test");
 $("tab-write").onclick = () => setMode("write");
 $("tab-hard").onclick = () => setMode("hard");
 $("btn-review").onclick = toggleReview;
+$("btn-time").onclick = () => {
+  S.timed = !S.timed; save(); renderStats();
+  if (!S.timed) { timerReset(); }
+  else if (!answered && $("btn-next")) { tActive = true; tAcc = 0; timerResume(); }
+};
 
 document.querySelectorAll("[data-topic]").forEach(b => b.onclick = () => { S.topic = b.dataset.topic; newRound(); });
 document.querySelectorAll("[data-hfmt]").forEach(b => b.onclick = () => { S.hardFormat = b.dataset.hfmt; newRound(); });
