@@ -44,13 +44,13 @@
     margin: 8px 0 18px;
   }
   .tabs {
-    display: flex; gap: 8px; background: var(--card);
+    display: flex; flex-wrap: wrap; gap: 8px; background: var(--card);
     padding: 6px; border-radius: 16px; box-shadow: var(--shadow);
     margin-bottom: 18px;
   }
   .tab {
-    flex: 1; border: 0; background: transparent; color: var(--muted);
-    padding: 12px 8px; border-radius: 12px; font-size: 1rem; font-weight: 600;
+    flex: 1 1 30%; min-width: 0; border: 0; background: transparent; color: var(--muted);
+    padding: 12px 6px; border-radius: 12px; font-size: .95rem; font-weight: 600;
     cursor: pointer; transition: all .2s;
   }
   .tab:hover { background: var(--accent-soft); }
@@ -74,6 +74,16 @@
   }
   .chip:hover { border-color: var(--accent); }
   .chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .lbl { align-self: center; font-size: .85rem; color: var(--muted); }
+  .head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .hard-toggle {
+    display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none;
+    font-size: .85rem; font-weight: 600; color: var(--muted);
+    border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; transition: all .2s;
+  }
+  .hard-toggle:hover { border-color: var(--bad); }
+  .hard-toggle.on { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+  .hard-toggle input { accent-color: var(--bad); width: 16px; height: 16px; margin: 0; cursor: pointer; }
   .chip.danger:hover { border-color: var(--bad); color: var(--bad); }
 
   .progress { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; margin-bottom: 6px; }
@@ -138,6 +148,7 @@
   <div class="tabs">
     <button class="tab" id="tab-test">Fase 1: Test</button>
     <button class="tab" id="tab-write">Fase 2: Escribir</button>
+    <button class="tab" id="tab-hard">Fase 3: Difíciles (<span id="hard-count">0</span>)</button>
   </div>
 
   <div class="stats">
@@ -151,6 +162,19 @@
     <button class="chip" id="btn-failed">Solo falladas (<span id="failed-count">0</span>)</button>
     <button class="chip" id="btn-round">Nueva ronda</button>
     <button class="chip danger" id="btn-reset">Reiniciar estadísticas</button>
+  </div>
+
+  <div class="toolbar">
+    <span class="lbl">Tema:</span>
+    <button class="chip" data-topic="all">Mezclar ambos</button>
+    <button class="chip" data-topic="Generales">Generales</button>
+    <button class="chip" data-topic="Tema relieve">Relieve</button>
+    <button class="chip" id="btn-pics">Fotos: sí</button>
+  </div>
+  <div class="toolbar hidden" id="hard-format">
+    <span class="lbl">Fase 3 en formato:</span>
+    <button class="chip" data-hfmt="test">Test</button>
+    <button class="chip" data-hfmt="write">Escribir</button>
   </div>
 
   <div class="progress"><div id="bar"></div></div>
@@ -236,7 +260,7 @@ const KEY = "geo-defs-v1";
 const $ = id => document.getElementById(id);
 
 // ---------- Estado ----------
-let S = { mode: "test", onlyFailed: false, ok: 0, bad: 0, failed: [],
+let S = { mode: "test", topic: "all", showPics: true, hardFormat: "test", hard: [], onlyFailed: false, ok: 0, bad: 0, failed: [],
           round: { queue: [], idx: 0, ok: 0, bad: 0, last: null, done: false } };
 let answered = false;   // ¿la pregunta actual ya se ha respondido?
 let options = [];       // opciones de la pregunta actual (Fase 1)
@@ -267,10 +291,19 @@ function norm(s) {
 }
 const byId = id => DEFS[id];
 
+// Formato de pregunta que toca: la Fase 3 usa el formato elegido aparte
+const fmt = () => S.mode === "hard" ? S.hardFormat : S.mode;
+
 // ---------- Rondas ----------
+function pool() {
+  let p = DEFS.filter(d => S.topic === "all" || d.group === S.topic);
+  if (S.onlyFailed) p = p.filter(d => S.failed.includes(d.id));
+  if (S.mode === "hard") p = p.filter(d => S.hard.includes(d.id));
+  return p.map(d => d.id);
+}
+
 function newRound() {
-  const pool = S.onlyFailed ? S.failed.filter(id => byId(id)) : DEFS.map(d => d.id);
-  let q = shuffle(pool);
+  let q = shuffle(pool());
   // Evitar repetir la última definición vista justo al empezar
   if (q.length > 1 && q[0] === S.round.last) {
     const k = 1 + Math.floor(Math.random() * (q.length - 1));
@@ -292,8 +325,15 @@ function renderStats() {
   $("s-total").textContent = total;
   $("failed-count").textContent = S.failed.length;
   $("btn-failed").classList.toggle("on", S.onlyFailed);
+  $("hard-count").textContent = S.hard.length;
   $("tab-test").classList.toggle("active", S.mode === "test");
   $("tab-write").classList.toggle("active", S.mode === "write");
+  $("tab-hard").classList.toggle("active", S.mode === "hard");
+  $("hard-format").classList.toggle("hidden", S.mode !== "hard");
+  document.querySelectorAll("[data-hfmt]").forEach(b => b.classList.toggle("on", b.dataset.hfmt === S.hardFormat));
+  document.querySelectorAll("[data-topic]").forEach(b => b.classList.toggle("on", b.dataset.topic === S.topic));
+  $("btn-pics").classList.toggle("on", S.showPics);
+  $("btn-pics").textContent = "Fotos: " + (S.showPics ? "sí" : "no");
 }
 
 function renderProgress() {
@@ -312,21 +352,41 @@ function render() {
   card.innerHTML = "";
 
   if (!S.round.queue.length) {
-    card.innerHTML = '<div class="empty"><h2>' +
-      (S.onlyFailed ? "No tienes preguntas falladas 🎉" : "Sin preguntas") +
-      '</h2><p>' + (S.onlyFailed ? "Desactiva «Solo falladas» para practicar todas." : "") + '</p></div>';
+    let title = "No hay preguntas con estos filtros", hint = "Cambia el tema o desactiva «Solo falladas».";
+    if (S.mode === "hard" && !S.hard.length) {
+      title = "Aún no has marcado ninguna como difícil";
+      hint = "Marca la casilla «Difícil» mientras practicas en las fases 1 o 2 y aparecerán aquí.";
+    } else if (S.onlyFailed && !S.failed.length) {
+      title = "No tienes preguntas falladas 🎉"; hint = "Desactiva «Solo falladas» para practicar todas.";
+    }
+    card.innerHTML = '<div class="empty"><h2></h2><p></p></div>';
+    card.querySelector("h2").textContent = title;
+    card.querySelector("p").textContent = hint;
     renderProgress();
     return;
   }
   if (S.round.done || S.round.idx >= S.round.queue.length) { renderDone(); return; }
 
   const q = currentQ();
-  if (q.pic) new Image().src = q.pic[0];
+  if (q.pic && S.showPics) new Image().src = q.pic[0];
+  const head = document.createElement("div"); head.className = "head";
   const g = document.createElement("div"); g.className = "group"; g.textContent = q.group;
+  const hl = document.createElement("label"); hl.className = "hard-toggle";
+  const cb = document.createElement("input"); cb.type = "checkbox"; cb.id = "hard-cb";
+  cb.checked = S.hard.includes(q.id);
+  hl.classList.toggle("on", cb.checked);
+  cb.onchange = () => {
+    S.hard = S.hard.filter(x => x !== q.id);
+    if (cb.checked) S.hard.push(q.id);
+    hl.classList.toggle("on", cb.checked);
+    save(); renderStats();
+  };
+  hl.append(cb, "Difícil");
+  head.append(g, hl);
   const d = document.createElement("div"); d.className = "definition"; d.textContent = q.definition;
-  card.append(g, d);
+  card.append(head, d);
 
-  if (S.mode === "test") renderTest(card, q); else renderWrite(card, q);
+  if (fmt() === "test") renderTest(card, q); else renderWrite(card, q);
 
   const fb = document.createElement("div"); fb.className = "feedback"; fb.id = "fb";
   const nx = document.createElement("div"); nx.className = "next hidden"; nx.id = "next";
@@ -393,7 +453,7 @@ function record(correct, id) {
 }
 
 function showPic(q) {
-  if (!q.pic) return;
+  if (!q.pic || !S.showPics) return;
   const fig = document.createElement("figure"); fig.className = "pic";
   const img = document.createElement("img");
   img.src = q.pic[0]; img.alt = q.concept;
@@ -447,9 +507,22 @@ function next() {
 }
 
 // ---------- Eventos ----------
-function setMode(m) { S.mode = m; save(); render(); }
+function setMode(m) {
+  const involvesHard = m === "hard" || S.mode === "hard";
+  S.mode = m;
+  if (involvesHard) newRound(); else { save(); render(); }
+}
 $("tab-test").onclick = () => setMode("test");
 $("tab-write").onclick = () => setMode("write");
+$("tab-hard").onclick = () => setMode("hard");
+
+document.querySelectorAll("[data-topic]").forEach(b => b.onclick = () => { S.topic = b.dataset.topic; newRound(); });
+document.querySelectorAll("[data-hfmt]").forEach(b => b.onclick = () => { S.hardFormat = b.dataset.hfmt; newRound(); });
+$("btn-pics").onclick = () => {
+  S.showPics = !S.showPics; save(); renderStats();
+  document.querySelectorAll(".pic").forEach(p => p.remove());
+  if (S.showPics && answered && !S.round.done) showPic(currentQ());
+};
 
 $("btn-failed").onclick = () => { S.onlyFailed = !S.onlyFailed; newRound(); };
 $("btn-round").onclick = newRound;
@@ -468,7 +541,7 @@ $("btn-reset").onclick = () => {
 
 document.addEventListener("keydown", e => {
   if (e.key !== "Enter") return;
-  if (S.mode === "write" && !S.round.done && S.round.queue.length) {
+  if (fmt() === "write" && !S.round.done && S.round.queue.length) {
     e.preventDefault();
     if (!answered) checkWrite(); else next();
   } else if (answered && document.activeElement.id !== "btn-next") {
