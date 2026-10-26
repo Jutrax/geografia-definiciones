@@ -84,6 +84,13 @@
   body.reviewing .nav { display: none; }
   #timer { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--accent); }
   .done p { color: var(--muted); margin: -8px 0 20px; }
+  .subjects { display: flex; gap: 8px; margin-bottom: 14px; }
+  .subj {
+    flex: 1; border: 2px solid var(--line); background: var(--card); color: var(--ink);
+    padding: 11px 8px; border-radius: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all .2s;
+  }
+  .subj:hover { border-color: var(--accent); }
+  .subj.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
   .lbl { align-self: center; font-size: .85rem; color: var(--muted); }
   .head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
   .hard-toggle {
@@ -165,7 +172,12 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>GEOGRAFÍA — DEFINICIONES</h1>
+  <h1 id="title">GEOGRAFÍA — DEFINICIONES</h1>
+
+  <div class="subjects">
+    <button class="subj" data-subj="geo">Geografía</button>
+    <button class="subj" data-subj="eng">Inglés · Tema 1</button>
+  </div>
 
   <div class="tabs">
     <button class="tab" id="tab-test">Fase 1: Test</button>
@@ -189,11 +201,10 @@
 
   <div class="toolbar">
     <span class="lbl">Tema:</span>
-    <button class="chip" data-topic="all">Mezclar ambos</button>
-    <button class="chip" data-topic="Generales">Generales</button>
-    <button class="chip" data-topic="Tema relieve">Relieve</button>
+    <span id="topics" style="display: contents"></span>
     <button class="chip" id="btn-pics">Fotos: sí</button>
     <button class="chip" id="btn-time">Cronómetro: no</button>
+    <button class="chip hidden" id="btn-dir"></button>
   </div>
   <div class="toolbar hidden" id="hard-format">
     <span class="lbl">Fase 3 en formato:</span>
@@ -250,7 +261,7 @@ const PICS = {
 };
 
 // Definiciones tal cual las dio la profesora (no modificar).
-const DEFS = [
+const GEO_DEFS = [
   // GENERALES
   ["Generales", "Cambio climático", "variación en los elementos del clima de la Tierra que puede tener causas naturales y humanas"],
   ["Generales", "Desarrollo sostenible", "enfoque que busca satisfacer las necesidades actuales sin comprometer la capacidad de las futuras generaciones."],
@@ -286,25 +297,208 @@ const DEFS = [
   ["Tema relieve", "Zócalo", "mesetas o llanuras formadas por la erosión de cordilleras antiguas. Al ser la base de dichas cordilleras está compuesto de materiales antiguos y duros."]
 ].map(([group, concept, definition], id) => ({ id, group, concept, definition, pic: PICS[concept] }));
 
-const KEY = "geo-defs-v1";
+// Vocabulario inglés Tema 1: [apartado, inglés, español] tal cual aparece en el libro
+const ENG_DEFS = [
+  ["Preposiciones", "confidence in", "confianza en"],
+  ["Preposiciones", "contribution to", "contribución a"],
+  ["Preposiciones", "lack of", "falta de"],
+  ["Preposiciones", "need for", "necesidad de"],
+  ["Preposiciones", "accustomed to", "acostumbrado/a a (become ~: acostumbrarse a)"],
+  ["Preposiciones", "afraid of", "asustado/a de"],
+  ["Preposiciones", "amazed by", "maravillado/a por"],
+  ["Preposiciones", "associated with", "asociado/a / relacionado/a con"],
+  ["Preposiciones", "aware of", "consciente de"],
+  ["Preposiciones", "bad at", "malo/a para (I'm so ~: no se me da nada bien)"],
+  ["Preposiciones", "based on", "basado/a en"],
+  ["Preposiciones", "capable of", "capaz de"],
+  ["Preposiciones", "committed to", "comprometido/a con (be ~: comprometerse a)"],
+  ["Preposiciones", "crowded with", "abarrotado/a / lleno/a de"],
+  ["Preposiciones", "curious about", "curioso/a sobre, interesado/a por (be ~: tener curiosidad / interés por)"],
+  ["Preposiciones", "disappointed with", "decepcionado/a / desilusionado/a con"],
+  ["Preposiciones", "enrolled in", "inscrito/a / matriculado/a en"],
+  ["Preposiciones", "excited about", "emocionado/a / entusiasmado/a por"],
+  ["Preposiciones", "experienced in", "experto/a en"],
+  ["Preposiciones", "fascinated by", "fascinado/a por"],
+  ["Preposiciones", "frustrated by", "frustrado/a con"],
+  ["Preposiciones", "impressed with", "impresionado/a con"],
+  ["Preposiciones", "interested in", "interesado/a en / por"],
+  ["Preposiciones", "involved in", "involucrado/a / implicado/a en"],
+  ["Preposiciones", "jealous of", "celoso/a de (be ~: tener envidia de)"],
+  ["Preposiciones", "keen on", "aficionado/a a, entusiasta de"],
+  ["Preposiciones", "kind to", "amable / atento/a con"],
+  ["Preposiciones", "mad about", "muy entusiasmado/a con"],
+  ["Preposiciones", "popular with", "conocido/a por, famoso/a entre"],
+  ["Preposiciones", "proud of", "orgulloso/a de"],
+  ["Preposiciones", "responsible for", "responsable de"],
+  ["Preposiciones", "shocked by", "sorprendido/a / estupefacto/a por"],
+  ["Preposiciones", "successful at", "exitoso/a en"],
+  ["Preposiciones", "surprised by", "sorprendido/a por"],
+  ["Preposiciones", "terrible at", "malísimo/a para / en"],
+  ["Preposiciones", "upset about", "disgustado/a / molesto/a por"],
+  ["Preposiciones", "wrong about", "equivocado/a sobre"],
+  ["Glosario", "a matter of life and death", "un asunto de vida o muerte"],
+  ["Glosario", "a matter of opinion", "cuestión de opiniones"],
+  ["Glosario", "a matter of time", "una cuestión de tiempo"],
+  ["Glosario", "abroad", "(al / en el) extranjero"],
+  ["Glosario", "as a matter of fact", "de hecho, en realidad"],
+  ["Glosario", "backpacker", "mochilero/a"],
+  ["Glosario", "be no laughing matter", "no tener (ninguna) gracia, no ser objeto de broma"],
+  ["Glosario", "be on the line", "estar en la cuerda floja"],
+  ["Glosario", "breathtaking", "impresionante, espectacular"],
+  ["Glosario", "built-in", "integrado/a"],
+  ["Glosario", "buzz", "alboroto"],
+  ["Glosario", "carry-on", "de mano"],
+  ["Glosario", "closely", "atentamente, con atención"],
+  ["Glosario", "collect", "recopilar; recoger, obtener"],
+  ["Glosario", "cut a long story short", "resumiendo, en pocas palabras"],
+  ["Glosario", "deal (n)", "oferta; trato, negocio"],
+  ["Glosario", "deep", "intenso/a; profundo/a"],
+  ["Glosario", "delayed", "retrasado/a, demorado/a (get ~: retrasarse, demorarse)"],
+  ["Glosario", "depict", "representar"],
+  ["Glosario", "encourage", "animar / alentar a; fomentar"],
+  ["Glosario", "estimate", "estimación, cálculo"],
+  ["Glosario", "exciting", "emocionante, apasionante"],
+  ["Glosario", "encouragement", "ánimo(s)"],
+  ["Glosario", "for that matter", "en realidad, de hecho"],
+  ["Glosario", "immersed", "sumergido/a, inmerso/a"],
+  ["Glosario", "immersion", "inmersión"],
+  ["Glosario", "immersive", "inmersivo/a"],
+  ["Glosario", "surround", "rodear, circundar"],
+  ["Glosario", "surrounded", "rodeado/a"],
+  ["Glosario", "surrounding", "circundante"],
+  ["Glosario", "the fact of the matter is", "la verdad / el hecho es que"],
+  ["Glosario", "wander through", "deambular / pasear por"],
+  ["Glosario", "fancy", "lujoso/a"],
+  ["Glosario", "fine", "multa, penalización"],
+  ["Glosario", "get a glimpse", "echar un vistazo"],
+  ["Glosario", "handmade goods", "productos artesanales"],
+  ["Glosario", "harbour", "puerto"],
+  ["Glosario", "immerse", "sumergirse, meterse de lleno"],
+  ["Glosario", "in advance", "con antelación, previamente"],
+  ["Glosario", "input", "información"],
+  ["Glosario", "it doesn't matter", "no importa"],
+  ["Glosario", "keep still", "quedarse quieto/a"],
+  ["Glosario", "like-minded", "con ideas afines"],
+  ["Glosario", "location", "ubicación, lugar"],
+  ["Glosario", "memory", "recuerdo; memoria"],
+  ["Glosario", "mind over matter", "(fuerza de) voluntad"],
+  ["Glosario", "navigate", "orientarse"],
+  ["Glosario", "near and far", "(de) todas partes"],
+  ["Glosario", "no matter", "sin importar, independientemente de"],
+  ["Glosario", "off season", "en temporada baja"],
+  ["Glosario", "off you go", "andando, te marchas"],
+  ["Glosario", "open-air", "al aire libre"],
+  ["Glosario", "outdoors", "al aire libre"],
+  ["Glosario", "overnight", "por / de una noche (for an ~ stay: para pasar una noche)"],
+  ["Glosario", "pay attention", "prestar atención"],
+  ["Glosario", "recall", "recordar"],
+  ["Glosario", "record", "grabar"],
+  ["Glosario", "relive", "revivir, volver a sentir"],
+  ["Glosario", "rider", "ciclista"],
+  ["Glosario", "rough area", "zona peligrosa"],
+  ["Glosario", "rush", "torrente"],
+  ["Glosario", "smoothly", "sin contratiempos / inconvenientes"],
+  ["Glosario", "snap", "foto"],
+  ["Glosario", "stay on a schedule", "cumplir con / respetar un horario"],
+  ["Glosario", "stopover", "escala"],
+  ["Glosario", "surroundings", "entorno"],
+  ["Glosario", "take for granted", "no valorar / apreciar; dar por hecho"],
+  ["Glosario", "tap", "pulsar"],
+  ["Glosario", "the truth of the matter", "la verdad / lo cierto (del asunto), la realidad de los hechos"],
+  ["Glosario", "to make matters worse", "para colmo"],
+  ["Glosario", "toot", "bocinazo"],
+  ["Glosario", "tracking device", "dispositivo de localización"],
+  ["Glosario", "trail", "camino, sendero"],
+  ["Glosario", "trillion", "billón"],
+  ["Glosario", "waterfall", "cascada, catarata"],
+  ["Glosario", "What's the matter?", "¿Cuál es el problema? ¿Qué pasa / ocurre?"],
+  ["Glosario", "whitewater rafting", "descenso de ríos"],
+  ["Glosario", "win against the odds", "triunfar contra todo pronóstico"],
+  ["Glosario", "worthy", "que merece la pena"],
+  ["Glosario", "write down", "apuntar, anotar"],
+  ["Glosario", "wrong turn", "camino / calle equivocado/a"],
+  ["Cultural Interaction", "bitter", "gélido/a, glacial"],
+  ["Cultural Interaction", "carve", "esculpir, tallar"],
+  ["Cultural Interaction", "commission", "hacer un encargo a"],
+  ["Cultural Interaction", "fitting", "oportuno/a, justo/a"],
+  ["Cultural Interaction", "grounds", "terreno, zona"],
+  ["Cultural Interaction", "infamous", "infame, de mala fama"],
+  ["Cultural Interaction", "last", "durar"],
+  ["Cultural Interaction", "surrender to", "rendirse ante"],
+  ["Cultural Interaction", "swiftly", "rápidamente"],
+  ["Cultural Interaction", "take away from", "arrebatar a"],
+  ["Cultural Interaction", "treaty", "tratado, acuerdo"],
+  ["Skills Booster", "a matter of record", "un asunto conocido"],
+  ["Skills Booster", "as a matter of course", "de forma rutinaria"],
+  ["Skills Booster", "deal (v)", "tratar, lidiar"],
+  ["Skills Booster", "deepen", "profundizar; intensificarse"],
+  ["Skills Booster", "delay (n)", "retraso"],
+  ["Skills Booster", "delay (v)", "retrasar"],
+  ["Skills Booster", "depth", "profundidad; intensidad"],
+  ["Skills Booster", "encouraged", "motivado/a, animado/a"]
+].map(([group, concept, definition], id) => ({ id, group, concept, definition }));
+
+let DEFS = GEO_DEFS;
+const SUBJECTS = {
+  geo: { title: "GEOGRAFÍA — DEFINICIONES", topics: [["all", "Mezclar ambos"], ["Generales", "Generales"], ["Tema relieve", "Relieve"]] },
+  eng: { title: "VOCABULARIO INGLÉS — TEMA 1", topics: [["all", "Mezclar todo"], ["Preposiciones", "Preposiciones"], ["Glosario", "Glosario"], ["Cultural Interaction", "Cultural Interaction"], ["Skills Booster", "Skills Booster"]] }
+};
+
+const KEY1 = "geo-defs-v1", KEY = "study-v2";
 const $ = id => document.getElementById(id);
 
 // ---------- Estado ----------
-let S = { mode: "test", topic: "all", showPics: true, timed: false, hardFormat: "test", hard: [], right: [], onlyFailed: false, ok: 0, bad: 0, failed: [],
+let S = { subject: "geo", dir: "es-en", mode: "test", topic: "all", showPics: true, timed: false, hardFormat: "test", hard: [], right: [], onlyFailed: false, ok: 0, bad: 0, failed: [],
           round: { queue: [], idx: 0, ok: 0, bad: 0, time: 0, timedN: 0, res: {}, last: null, done: false } };
 let answered = false;   // ¿la pregunta actual ya se ha respondido?
 let options = [];       // opciones de la pregunta actual (Fase 1)
 
+// Cada asignatura guarda su propio progreso; los ajustes son comunes
+const PER = ["ok", "bad", "failed", "right", "hard", "onlyFailed", "topic", "round"];
+const COMMON = ["mode", "showPics", "timed", "hardFormat", "dir"];
+let STORE = { subject: "geo", common: {}, per: {} };
+const pick = (o, keys) => Object.fromEntries(keys.filter(k => k in o).map(k => [k, o[k]]));
+function capture() { STORE.subject = S.subject; STORE.common = pick(S, COMMON); STORE.per[S.subject] = pick(S, PER); }
+
+function applySubject(k) {
+  S.subject = k;
+  DEFS = k === "eng" ? ENG_DEFS : GEO_DEFS;
+  const blank = { queue: [], idx: 0, ok: 0, bad: 0, time: 0, timedN: 0, res: {}, last: null, done: false };
+  const saved = STORE.per[k] || {};
+  Object.assign(S, { ok: 0, bad: 0, failed: [], right: [], hard: [], onlyFailed: false, topic: "all" }, saved);
+  S.round = Object.assign({}, blank, saved.round);
+  $("title").textContent = SUBJECTS[k].title;
+  const box = $("topics");
+  box.innerHTML = "";
+  SUBJECTS[k].topics.forEach(([key, label]) => {
+    const b = document.createElement("button");
+    b.className = "chip"; b.dataset.topic = key; b.textContent = label;
+    b.onclick = () => { S.topic = key; newRound(); };
+    box.append(b);
+  });
+}
+
 function load() {
   try {
-    const raw = JSON.parse(localStorage.getItem(KEY));
-    if (raw && typeof raw === "object") {
-      S = Object.assign(S, raw);
-      S.round = Object.assign({ queue: [], idx: 0, ok: 0, bad: 0, time: 0, timedN: 0, res: {}, last: null, done: false }, raw.round);
+    let raw = JSON.parse(localStorage.getItem(KEY));
+    if (!raw) {
+      const old = JSON.parse(localStorage.getItem(KEY1));
+      if (old && typeof old === "object") raw = { subject: "geo", common: pick(old, COMMON), per: { geo: pick(old, PER) } };
     }
+    if (raw && typeof raw === "object") STORE = Object.assign(STORE, raw);
   } catch (e) { /* sin localStorage: se sigue sin guardar */ }
+  Object.assign(S, STORE.common);
+  applySubject(STORE.subject === "eng" ? "eng" : "geo");
 }
-function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function save() { try { capture(); localStorage.setItem(KEY, JSON.stringify(STORE)); } catch (e) {} }
+
+function switchSubject(k) {
+  if (k === S.subject) return;
+  capture();
+  applySubject(k);
+  save();
+  if (S.round.queue.length && S.round.queue.every(id => byId(id))) render(); else newRound();
+}
 
 // ---------- Utilidades ----------
 function shuffle(a) {
@@ -316,8 +510,26 @@ function shuffle(a) {
   return a;
 }
 function norm(s) {
-  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/['’]/g, "")
           .replace(/[^a-z0-9ñ ]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+// Qué se enseña y qué hay que contestar: en inglés se puede elegir la dirección
+const isEng = () => S.subject === "eng";
+const promptOf = d => isEng() && S.dir === "en-es" ? d.concept : d.definition;
+const answerOf = d => isEng() && S.dir === "en-es" ? d.definition : d.concept;
+const cmp = t => norm(t).replace(/ /g, "");
+const strip = t => t.replace(/\([^)]*\)/g, " ");
+const parts = t => strip(t).split(/\s\/\s|,/).map(cmp).filter(Boolean);
+const meaningKey = d => isEng() ? parts(d.definition).sort().join("|") : d.concept;
+function variants(t) { return new Set([cmp(t), cmp(strip(t)), ...parts(t)]); }
+function isCorrect(q, input) {
+  const n = cmp(input);
+  if (!n) return false;
+  if (variants(answerOf(q)).has(n)) return true;
+  // dos palabras con el mismo significado (p. ej. open-air / outdoors) valen las dos
+  if (isEng() && S.dir !== "en-es") return DEFS.some(x => x.id !== q.id && meaningKey(x) === meaningKey(q) && variants(x.concept).has(n));
+  return false;
 }
 const byId = id => DEFS[id];
 
@@ -377,6 +589,10 @@ function renderStats() {
   document.querySelectorAll("[data-topic]").forEach(b => b.classList.toggle("on", b.dataset.topic === S.topic));
   $("btn-pics").classList.toggle("on", S.showPics);
   $("btn-pics").textContent = "Fotos: " + (S.showPics ? "sí" : "no");
+  document.querySelectorAll("[data-subj]").forEach(b => b.classList.toggle("on", b.dataset.subj === S.subject));
+  $("btn-pics").classList.toggle("hidden", isEng());
+  $("btn-dir").classList.toggle("hidden", !isEng());
+  $("btn-dir").textContent = "Dirección: " + (S.dir === "en-es" ? "inglés → español" : "español → inglés");
   $("btn-time").classList.toggle("on", S.timed);
   $("btn-time").textContent = "Cronómetro: " + (S.timed ? "sí" : "no");
 }
@@ -447,7 +663,7 @@ function render() {
   };
   hl.append(cb, "Difícil");
   head.append(g, hl);
-  const d = document.createElement("div"); d.className = "definition"; d.textContent = q.definition;
+  const d = document.createElement("div"); d.className = "definition"; d.textContent = promptOf(q);
   card.append(head, d);
 
   const prev = S.round.res[q.id];
@@ -474,11 +690,11 @@ function render() {
 
 function renderTest(card, q, prev) {
   if (prev && prev.opts) options = prev.opts.map(byId);
-  else options = shuffle([q, ...shuffle(DEFS.filter(x => x.id !== q.id)).slice(0, 3)]);
+  else options = shuffle([q, ...shuffle(DEFS.filter(x => x.id !== q.id && meaningKey(x) !== meaningKey(q))).slice(0, 3)]);
   const box = document.createElement("div"); box.className = "options";
   options.forEach(o => {
     const b = document.createElement("button");
-    b.className = "opt"; b.textContent = o.concept; b.dataset.id = o.id;
+    b.className = "opt"; b.textContent = answerOf(o); b.dataset.id = o.id;
     b.onclick = () => answerTest(o.id, box);
     box.append(b);
   });
@@ -493,7 +709,7 @@ function renderTest(card, q, prev) {
 function renderWrite(card, q, prev) {
   const row = document.createElement("div"); row.className = "answer-row";
   const inp = document.createElement("input");
-  inp.type = "text"; inp.id = "inp"; inp.placeholder = "Escribe el concepto…";
+  inp.type = "text"; inp.id = "inp"; inp.placeholder = !isEng() ? "Escribe el concepto…" : S.dir === "en-es" ? "Escribe el significado en español…" : "Escribe la palabra o expresión en inglés…";
   inp.autocomplete = "off"; inp.autocapitalize = "off"; inp.spellcheck = false;
   const b = document.createElement("button"); b.className = "btn"; b.id = "btn-check"; b.textContent = "Comprobar";
   b.onclick = checkWrite;
@@ -566,7 +782,7 @@ function showPic(q) {
 function feedback(ok, q) {
   const fb = $("fb");
   fb.className = "feedback " + (ok ? "ok" : "bad");
-  fb.textContent = ok ? "¡Correcto!" : "Incorrecto. La respuesta correcta es: " + q.concept;
+  fb.textContent = ok ? "¡Correcto!" : "Incorrecto. La respuesta correcta es: " + answerOf(q);
 }
 
 function answerTest(chosenId, box) {
@@ -587,7 +803,7 @@ function checkWrite() {
   const inp = $("inp");
   if (!inp.value.trim()) { inp.focus(); return; }
   const q = currentQ();
-  const ok = norm(inp.value) === norm(q.concept);
+  const ok = isCorrect(q, inp.value);
   inp.disabled = true;
   $("btn-check").disabled = true;
   inp.style.borderColor = ok ? "var(--ok)" : "var(--bad)";
@@ -690,7 +906,8 @@ $("btn-time").onclick = () => {
   else if (!answered && $("btn-next")) { tActive = true; tAcc = 0; timerResume(); }
 };
 
-document.querySelectorAll("[data-topic]").forEach(b => b.onclick = () => { S.topic = b.dataset.topic; newRound(); });
+document.querySelectorAll("[data-subj]").forEach(b => b.onclick = () => switchSubject(b.dataset.subj));
+$("btn-dir").onclick = () => { S.dir = S.dir === "en-es" ? "es-en" : "en-es"; newRound(); };
 document.querySelectorAll("[data-hfmt]").forEach(b => b.onclick = () => { S.hardFormat = b.dataset.hfmt; newRound(); });
 $("btn-pics").onclick = () => {
   S.showPics = !S.showPics; save(); renderStats();
