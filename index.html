@@ -84,11 +84,13 @@
   body.reviewing .nav { display: none; }
   #timer { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--accent); }
   .done p { color: var(--muted); margin: -8px 0 20px; }
-  .subjects { display: flex; gap: 8px; margin-bottom: 14px; }
+  .subjects { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
   .subj {
-    flex: 1; border: 2px solid var(--line); background: var(--card); color: var(--ink);
-    padding: 11px 8px; border-radius: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all .2s;
+    flex: 1 1 28%; border: 2px solid var(--line); background: var(--card); color: var(--ink);
+    padding: 11px 6px; border-radius: 14px; font-size: .95rem; font-weight: 700; cursor: pointer; transition: all .2s;
   }
+  .ej { margin-top: 16px; padding: 12px 14px; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 8px; text-align: left; font-size: .95rem; }
+  .ej i { display: block; margin-top: 4px; }
   .subj:hover { border-color: var(--accent); }
   .subj.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
   .lbl { align-self: center; font-size: .85rem; color: var(--muted); }
@@ -177,6 +179,7 @@
   <div class="subjects">
     <button class="subj" data-subj="geo">Geografía</button>
     <button class="subj" data-subj="eng">Inglés · Tema 1</button>
+    <button class="subj" data-subj="len">Lengua</button>
   </div>
 
   <div class="tabs">
@@ -503,8 +506,37 @@ const ENG_DEFS = [
   ["Unidad 6 (trad. de Claude)", "tell off", "regañar, reñir"]
 ].map(([group, concept, definition], id) => ({ id, group, concept, definition }));
 
+// Lengua: recursos expresivos, [apartado, recurso, definición, ejemplo] tal cual aparecen en la tabla
+const LEN_DEFS = [
+  ["Recursos expresivos", "Cambio de registro", "Uso de un registro diferente al usual del texto", "Por fin vi Barbie y es una castaña (El País, 13/01/24)"],
+  ["Recursos expresivos", "Cambio de código", "Presencia de una palabra de otro idioma", "Vaya historia, la del amorío entre la vigente novia de América y una estrella deportiva con un toque de bad guy (El País, 5/02/24)"],
+  ["Recursos expresivos", "Invención de palabras", "Creación de palabras nuevas o de sentidos nuevos a palabras existentes", "Qué divarraca es Miley Cyrus, más reina que Taylor Swift (ABC, 6/02/24)"],
+  ["Recursos expresivos", "Reduplicación", "Repetición continuada de una palabra", "Mi calle en esta época preotoñal deviene un jardín de rostros y de piernas y de brazos tiernos, tiernos, tiernos, como los brotes de una planta (El País, 27/09/20)"],
+  ["Recursos expresivos", "Políptoton", "Uso de una palabra en diferentes flexiones gramaticales", "Pellegrini no es perfecto, pero sí una perfecta garantía (Diario de Sevilla, 28/01/24)"],
+  ["Recursos expresivos", "Derivación", "Uso de palabras de la misma familia léxica", "Debe ser esa consciente consciencia de estar en primera línea de tanatorio que nos embarga (El País, 29/02/24)"],
+  ["Recursos expresivos", "Enumeración", "Acumulación de elementos iguales coordinados. Si está ordenada se llama gradación", "Esa montaña rusa de ilusiones y desengaños, amores y rupturas, éxtasis y calvarios que llamamos vida (El País, 14/03/24)"],
+  ["Recursos expresivos", "Polisíndeton", "Acumulación de nexos", "Pero uno quisiera echar también aquí, al aire, la duda de si estorba o mucho, o poco, o nada, el runner (El País, 27/02/24)"],
+  ["Recursos expresivos", "Asíndeton", "Supresión de nexos", "Sucede a cada paso, en la escolarización temprana, en el embarazo tardío, en la fertilización incierta, en la vejez (El País, 6/02/24)"],
+  ["Recursos expresivos", "Paralelismo", "Repetición de una misma estructura sintáctica", "Desde hace siglos hemos derruido montañas y desviado ríos, hemos extraído materiales y energía fosilizada del subsuelo, hemos ganado espacio al mar para adecuar las playas al turismo (eldiario.es, 31/01/24)"],
+  ["Recursos expresivos", "Paronomasia", "Asociación de palabras con parecido fonético pero significado diferente", "Telón Delon (El País, 6/02/24)"],
+  ["Recursos expresivos", "Retruécano", "Contraposición de dos frases formadas por las mismas palabras con el orden invertido en una de ellas", "¡Más vale honra sin vacuna que vacuna sin honra! (La Vanguardia, 25/11/20)"],
+  ["Recursos expresivos", "Epíteto", "Adjetivo que ofrece una característica conocida o inherente del sustantivo al que acompaña", "Capaz de portar las opulentas tiaras como como quien lleva una diadema de playa (El País, 14/03/24)"],
+  ["Recursos expresivos", "Hipérbole", "Exageración", "El centro va quedando muy aseado, pero otras vías necesitan reparación o refundación, incluso (ABC, 6/02/24)"],
+  ["Recursos expresivos", "Personificación", "Atribución de rasgos humanos a algo que no lo es", "Lo que los chimpancés nos enseñan sobre nuestros adolescentes en TikToK (eldiario.es, 1/02/24)"],
+  ["Recursos expresivos", "Antítesis", "Relación de elementos opuestos", "Para apreciar la luz hay que conocer la oscuridad (ABC, 22/01/24)"],
+  ["Recursos expresivos", "Paradoja", "Relación de ideas en aparente contradicción que en el fondo cobran sentido", "Todo pasa cuando no pasa nada (El País, 6/02/24)"],
+  ["Recursos expresivos", "Oxímoron", "Unión de dos conceptos contradictorios en la misma expresión", "La joven eternidad de un póster (ABC, 8/03/24)"],
+  ["Recursos expresivos", "Comparación", "Identificación de una realidad y un término imaginario similar a través de un nexo comparativo", "He dicho muchas veces que la lengua es algo orgánico, que es como la pila de una sociedad (El País, 4/02/24)"],
+  ["Recursos expresivos", "Metáfora", "Identificación de una realidad con un término imaginario al que se asemeja", "La economía es magia: todo por aquí y nada por allá (infolibre.es, 29/01/24)"],
+  ["Recursos expresivos", "Imagen", "Alusión a una realidad mediante la representación de una escena imaginaria subjetiva", "Los huracanes lo único que hacen es remover la capa de olvido ancestral que cubre la costa del Caribe (El País, 25/11/20)"],
+  ["Recursos expresivos", "Metonimia", "Identificación de un término real con otro imaginario con el que se relaciona por contigüidad (parte-todo, causa-consecuencia, etc.)", "El malestar del campo toma las calles (eldiario.es, 3/02/24)"],
+  ["Recursos expresivos", "Reticencia", "Enunciado incompleto o sin terminar de aclarar", "Tengo que tomármelo con filosofía, porque si me molestaran estas cosas… (20minutos, 29/11/20)"],
+  ["Recursos expresivos", "Ironía", "Enunciado que da a entender lo contrario de lo que se dice", "Bueno, quien dice una maleta, dice la maleta, un bolso en el que hubiera cabido un bebé de once meses con pañales y biberones para un trimestre, y un escapulario al cuello con el pasaporte. Lo imprescindible, vamos (El País, 15/06/23)"]
+].map(([group, concept, definition, example], id) => ({ id, group, concept, definition, example }));
+
 let DEFS = GEO_DEFS;
 const SUBJECTS = {
+  len: { title: "LENGUA — RECURSOS EXPRESIVOS", topics: [["all", "Todos los recursos"]] },
   geo: { title: "GEOGRAFÍA — DEFINICIONES", topics: [["all", "Mezclar ambos"], ["Generales", "Generales"], ["Tema relieve", "Relieve"]] },
   eng: { title: "VOCABULARIO INGLÉS — TEMA 1", topics: [["all", "Mezclar todo"], ["Preposiciones", "Preposiciones"], ["Glosario", "Glosario"], ["Cultural Interaction", "Cultural Interaction"], ["Skills Booster", "Skills Booster"], ["Unidad 6 (trad. de Claude)", "Unidad 6 (trad. de Claude)"]] }
 };
@@ -527,7 +559,7 @@ function capture() { STORE.subject = S.subject; STORE.common = pick(S, COMMON); 
 
 function applySubject(k) {
   S.subject = k;
-  DEFS = k === "eng" ? ENG_DEFS : GEO_DEFS;
+  DEFS = k === "eng" ? ENG_DEFS : k === "len" ? LEN_DEFS : GEO_DEFS;
   const blank = { queue: [], idx: 0, ok: 0, bad: 0, time: 0, timedN: 0, res: {}, last: null, done: false };
   const saved = STORE.per[k] || {};
   Object.assign(S, { ok: 0, bad: 0, failed: [], right: [], hard: [], onlyFailed: false, topic: "all" }, saved);
@@ -553,7 +585,7 @@ function load() {
     if (raw && typeof raw === "object") STORE = Object.assign(STORE, raw);
   } catch (e) { /* sin localStorage: se sigue sin guardar */ }
   Object.assign(S, STORE.common);
-  applySubject(STORE.subject === "eng" ? "eng" : "geo");
+  applySubject(SUBJECTS[STORE.subject] ? STORE.subject : "geo");
 }
 function save() { try { capture(); localStorage.setItem(KEY, JSON.stringify(STORE)); } catch (e) {} }
 
@@ -655,7 +687,7 @@ function renderStats() {
   $("btn-pics").classList.toggle("on", S.showPics);
   $("btn-pics").textContent = "Fotos: " + (S.showPics ? "sí" : "no");
   document.querySelectorAll("[data-subj]").forEach(b => b.classList.toggle("on", b.dataset.subj === S.subject));
-  $("btn-pics").classList.toggle("hidden", isEng());
+  $("btn-pics").classList.toggle("hidden", S.subject !== "geo");
   $("btn-dir").classList.toggle("hidden", !isEng());
   $("btn-dir").textContent = "Dirección: " + (S.dir === "en-es" ? "inglés → español" : "español → inglés");
   $("btn-time").classList.toggle("on", S.timed);
@@ -745,6 +777,7 @@ function render() {
   if (prev) {
     answered = true;
     feedback(prev.ok, q);
+    showExample(q);
     showPic(q);
     nx.classList.remove("hidden");
   }
@@ -774,7 +807,7 @@ function renderTest(card, q, prev) {
 function renderWrite(card, q, prev) {
   const row = document.createElement("div"); row.className = "answer-row";
   const inp = document.createElement("input");
-  inp.type = "text"; inp.id = "inp"; inp.placeholder = !isEng() ? "Escribe el concepto…" : S.dir === "en-es" ? "Escribe el significado en español…" : "Escribe la palabra o expresión en inglés…";
+  inp.type = "text"; inp.id = "inp"; inp.placeholder = S.subject === "len" ? "Escribe el recurso…" : !isEng() ? "Escribe el concepto…" : S.dir === "en-es" ? "Escribe el significado en español…" : "Escribe la palabra o expresión en inglés…";
   inp.autocomplete = "off"; inp.autocapitalize = "off"; inp.spellcheck = false;
   const b = document.createElement("button"); b.className = "btn"; b.id = "btn-check"; b.textContent = "Comprobar";
   b.onclick = checkWrite;
@@ -824,6 +857,7 @@ function record(correct, id, pick) {
   save();
   renderStats();
   renderProgress();
+  showExample(byId(id));
   showPic(byId(id));
   $("next").classList.remove("hidden");
   $("btn-next").focus();
@@ -842,6 +876,15 @@ function showPic(q) {
   cap.append(a);
   fig.append(img, cap);
   $("card").insertBefore(fig, $("next"));
+}
+
+function showExample(q) {
+  if (!q.example) return;
+  const box = document.createElement("div"); box.className = "ej";
+  box.append("Ejemplo:");
+  const i = document.createElement("i"); i.textContent = q.example;
+  box.append(i);
+  $("card").insertBefore(box, $("next"));
 }
 
 function feedback(ok, q) {
