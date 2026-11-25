@@ -86,7 +86,7 @@
   .done p { color: var(--muted); margin: -8px 0 20px; }
   .subjects { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
   .subj {
-    flex: 1 1 28%; border: 2px solid var(--line); background: var(--card); color: var(--ink);
+    flex: 1 1 40%; border: 2px solid var(--line); background: var(--card); color: var(--ink);
     padding: 11px 6px; border-radius: 14px; font-size: .95rem; font-weight: 700; cursor: pointer; transition: all .2s;
   }
   .ej { margin-top: 16px; padding: 12px 14px; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 8px; text-align: left; font-size: .95rem; }
@@ -177,7 +177,8 @@
   <h1 id="title">GEOGRAFÍA — DEFINICIONES</h1>
 
   <div class="subjects">
-    <button class="subj" data-subj="geo">Geografía</button>
+    <button class="subj" data-subj="geo">Geografía · 1.er examen</button>
+    <button class="subj" data-subj="geo2">Geografía · 2.º examen</button>
     <button class="subj" data-subj="eng">Inglés · Tema 1</button>
     <button class="subj" data-subj="len">Lengua</button>
   </div>
@@ -260,7 +261,43 @@ const PICS = {
   "Rambla": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2a/River_canyon_of_Rambla_de_Perea_in_Los_Ba%C3%B1os_de_Mula%2C_R%C3%ADo_Mula%2C_Murcia%2C_Spain%2C_2025_February_-_2.jpg/330px-River_canyon_of_Rambla_de_Perea_in_Los_Ba%C3%B1os_de_Mula%2C_R%C3%ADo_Mula%2C_Murcia%2C_Spain%2C_2025_February_-_2.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:River_canyon_of_Rambla_de_Perea_in_Los_Ba%C3%B1os_de_Mula,_R%C3%ADo_Mula,_Murcia,_Spain,_2025_February_-_2.jpg"],
   "Relieve alpino": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3b/2019_-_Parc_national_des_Pyrenees_-_Vall%C3%A9e_de_Gavarnie.jpg/500px-2019_-_Parc_national_des_Pyrenees_-_Vall%C3%A9e_de_Gavarnie.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:2019_-_Parc_national_des_Pyrenees_-_Vall%C3%A9e_de_Gavarnie.jpg"],
   "Relieve herciniano": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9d/Variscan_belt_in_Europa.webp/500px-Variscan_belt_in_Europa.webp?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:Variscan_belt_in_Europa.webp"],
-  "Zócalo": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d2/Precambrian_peneplain_Kinnekulle.jpg/500px-Precambrian_peneplain_Kinnekulle.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:Precambrian_peneplain_Kinnekulle.jpg"]
+  "Zócalo": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d2/Precambrian_peneplain_Kinnekulle.jpg/500px-Precambrian_peneplain_Kinnekulle.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail", "https://commons.wikimedia.org/wiki/File:Precambrian_peneplain_Kinnekulle.jpg"],
+  "Amplitud térmica": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/4/46/Max_Min_Thermometer.JPG/500px-Max_Min_Thermometer.JPG", "https://commons.wikimedia.org/wiki/File:Max_Min_Thermometer.JPG"],
+  "Anticiclón": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ea/Heat_Wave.jpg/500px-Heat_Wave.jpg", "https://commons.wikimedia.org/wiki/File:Heat_Wave.jpg"],
+  "Aridez": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/7/75/Semi-desert_landscape_in_the_mountains_of_Russian_Altai.jpg/500px-Semi-desert_landscape_in_the_mountains_of_Russian_Altai.jpg", "https://commons.wikimedia.org/wiki/File:Semi-desert_landscape_in_the_mountains_of_Russian_Altai.jpg"],
+  "Barlovento": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d4/Rain_shadow_effect.jpg/500px-Rain_shadow_effect.jpg", "https://commons.wikimedia.org/wiki/File:Rain_shadow_effect.jpg"],
+  "Borrasca": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bc/Low_pressure_system_over_Iceland.jpg/500px-Low_pressure_system_over_Iceland.jpg", "https://commons.wikimedia.org/wiki/File:Low_pressure_system_over_Iceland.jpg"],
+  "Clima": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5f/K%C3%B6ppen-Geiger_climate_classification_%281980-2016%29.png/500px-K%C3%B6ppen-Geiger_climate_classification_%281980-2016%29.png", "https://commons.wikimedia.org/wiki/File:K%C3%B6ppen-Geiger_climate_classification_(1980-2016).png"],
+  "Continentalidad": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/2/21/Df_climate.png/500px-Df_climate.png", "https://commons.wikimedia.org/wiki/File:Df_climate.png"],
+  "Corriente en chorro": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/3/32/Hairpin_turns_in_the_polar_jet_stream.png/500px-Hairpin_turns_in_the_polar_jet_stream.png", "https://commons.wikimedia.org/wiki/File:Hairpin_turns_in_the_polar_jet_stream.png"],
+  "Depresión aislada en niveles altos": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0b/DANA_Brings_Floods_and_Dust_to_Europe_%28MODIS%29.jpg/500px-DANA_Brings_Floods_and_Dust_to_Europe_%28MODIS%29.jpg", "https://commons.wikimedia.org/wiki/File:DANA_Brings_Floods_and_Dust_to_Europe_(MODIS).jpg"],
+  "Equinoccio": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b8/Earth-lighting-equinox_TR.png/500px-Earth-lighting-equinox_TR.png", "https://commons.wikimedia.org/wiki/File:Earth-lighting-equinox_TR.png"],
+  "Frente polar": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d2/Front_occlus_trowal_en.png/500px-Front_occlus_trowal_en.png", "https://commons.wikimedia.org/wiki/File:Front_occlus_trowal_en.png"],
+  "Humedad atmosférica": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/d/dc/Hygrometer_USSR_1987.jpg/500px-Hygrometer_USSR_1987.jpg", "https://commons.wikimedia.org/wiki/File:Hygrometer_USSR_1987.jpg"],
+  "Isobaras": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c1/1947_October_15_0630_UTC_daily_weather_map.png/500px-1947_October_15_0630_UTC_daily_weather_map.png", "https://commons.wikimedia.org/wiki/File:1947_October_15_0630_UTC_daily_weather_map.png"],
+  "Isotermas": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f7/Plate_1._Isotherms-World._Mean_Annual_Temperature._Temperature_Zones._Annual_Simultaneous_Observations._Climate_Provinces._%28IA_dr_plate-1-isotherms-world-mean-annual-temperature-temperature-zones-annua-12430011%29.jpg/500px-thumbnail.jpg", "https://commons.wikimedia.org/wiki/File:Plate_1._Isotherms-World._Mean_Annual_Temperature._Temperature_Zones._Annual_Simultaneous_Observations._Climate_Provinces._(IA_dr_plate-1-isotherms-world-mean-annual-temperature-temperature-zones-annua-12430011).jpg"],
+  "Isoyetas": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c9/Mean_annual_precipitation_map_atlas_climatico_digital_republica_argentina.png/500px-Mean_annual_precipitation_map_atlas_climatico_digital_republica_argentina.png", "https://commons.wikimedia.org/wiki/File:Mean_annual_precipitation_map_atlas_climatico_digital_republica_argentina.png"],
+  "Precipitaciones": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/e/eb/2013-06-24_17_39_11_A_4-inch_plastic_rain_gauge_typical_of_those_used_by_the_CoCoRaHS_program.jpg/500px-2013-06-24_17_39_11_A_4-inch_plastic_rain_gauge_typical_of_those_used_by_the_CoCoRaHS_program.jpg", "https://commons.wikimedia.org/wiki/File:2013-06-24_17_39_11_A_4-inch_plastic_rain_gauge_typical_of_those_used_by_the_CoCoRaHS_program.jpg"],
+  "Presión atmosférica": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4b/Modern_Aneroid_Barometer.jpg/500px-Modern_Aneroid_Barometer.jpg", "https://commons.wikimedia.org/wiki/File:Modern_Aneroid_Barometer.jpg"],
+  "Régimen pluviométrico": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f9/Klimadiagramm_Bsp_01.jpg/500px-Klimadiagramm_Bsp_01.jpg", "https://commons.wikimedia.org/wiki/File:Klimadiagramm_Bsp_01.jpg"],
+  "Régimen térmico": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ae/Temperature-graph1.png/500px-Temperature-graph1.png", "https://commons.wikimedia.org/wiki/File:Temperature-graph1.png"],
+  "Sequía": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/9/91/Yesa_-_Embalse_-_Sequ%C3%ADa_01.jpg/500px-Yesa_-_Embalse_-_Sequ%C3%ADa_01.jpg", "https://commons.wikimedia.org/wiki/File:Yesa_-_Embalse_-_Sequ%C3%ADa_01.jpg"],
+  "Solana": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b0/Sheep_on_the_south_facing_slope_-_geograph.org.uk_-_6000974.jpg/500px-Sheep_on_the_south_facing_slope_-_geograph.org.uk_-_6000974.jpg", "https://commons.wikimedia.org/wiki/File:Sheep_on_the_south_facing_slope_-_geograph.org.uk_-_6000974.jpg"],
+  "Solsticio": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/9/91/ChangingSeasons_NH_01.png/500px-ChangingSeasons_NH_01.png", "https://commons.wikimedia.org/wiki/File:ChangingSeasons_NH_01.png"],
+  "Tiempo atmosférico": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c2/Port_and_lighthouse_overnight_storm_with_lightning_in_Port-la-Nouvelle.jpg/500px-Port_and_lighthouse_overnight_storm_with_lightning_in_Port-la-Nouvelle.jpg", "https://commons.wikimedia.org/wiki/File:Port_and_lighthouse_overnight_storm_with_lightning_in_Port-la-Nouvelle.jpg"],
+  "Umbría": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4f/Snow_covered_field_north_of_Ridgebourne_Road_-_geograph.org.uk_-_1728297.jpg/500px-Snow_covered_field_north_of_Ridgebourne_Road_-_geograph.org.uk_-_1728297.jpg", "https://commons.wikimedia.org/wiki/File:Snow_covered_field_north_of_Ridgebourne_Road_-_geograph.org.uk_-_1728297.jpg"],
+  "Caudal de un río": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9f/Historical_gauging_station%2C_river_P%C3%BCttlach_in_Pottenstein.jpg/500px-Historical_gauging_station%2C_river_P%C3%BCttlach_in_Pottenstein.jpg", "https://commons.wikimedia.org/wiki/File:Historical_gauging_station,_river_P%C3%BCttlach_in_Pottenstein.jpg"],
+  "Ciclo hidrológico": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ea/The_Water_Cycle_%28SVS30580%29.png/500px-The_Water_Cycle_%28SVS30580%29.png", "https://commons.wikimedia.org/wiki/File:The_Water_Cycle_(SVS30580).png"],
+  "Cuenca hidrográfica": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f1/Ashuapmushuan_River_basin_map.png/500px-Ashuapmushuan_River_basin_map.png", "https://commons.wikimedia.org/wiki/File:Ashuapmushuan_River_basin_map.png"],
+  "Estiaje": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4f/Jul2024._Low_water_at_Golden_Falls_Lake%2C_Ballymore_Eustace%2C_County_Kildare_01.jpg/500px-Jul2024._Low_water_at_Golden_Falls_Lake%2C_Ballymore_Eustace%2C_County_Kildare_01.jpg", "https://commons.wikimedia.org/wiki/File:Jul2024._Low_water_at_Golden_Falls_Lake,_Ballymore_Eustace,_County_Kildare_01.jpg"],
+  "Estuario": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7b/Aerial_photograph%2C_estuary%2C_Westerhaver.jpg/500px-Aerial_photograph%2C_estuary%2C_Westerhaver.jpg", "https://commons.wikimedia.org/wiki/File:Aerial_photograph,_estuary,_Westerhaver.jpg"],
+  "Meandro": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0e/Shimanto_River_incised_meander_Aerial_Photograph.jpg/500px-Shimanto_River_incised_meander_Aerial_Photograph.jpg", "https://commons.wikimedia.org/wiki/File:Shimanto_River_incised_meander_Aerial_Photograph.jpg"],
+  "Red hidrográfica": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9c/Giba_drainage_network.jpg/500px-Giba_drainage_network.jpg", "https://commons.wikimedia.org/wiki/File:Giba_drainage_network.jpg"],
+  "Régimen fluvial": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/4/45/USGS.12149000.01.00060..20070306.20070313.1.0.p50.pres.png/500px-USGS.12149000.01.00060..20070306.20070313.1.0.p50.pres.png", "https://commons.wikimedia.org/wiki/File:USGS.12149000.01.00060..20070306.20070313.1.0.p50.pres.png"],
+  "Ría": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9c/R%C3%ADa_de_Vigo_Galicia_2.jpg/500px-R%C3%ADa_de_Vigo_Galicia_2.jpg", "https://commons.wikimedia.org/wiki/File:R%C3%ADa_de_Vigo_Galicia_2.jpg"],
+  "Río": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f6/Pahalgam_Valley.jpg/500px-Pahalgam_Valley.jpg", "https://commons.wikimedia.org/wiki/File:Pahalgam_Valley.jpg"],
+  "Torrente": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5e/Bergtocht_van_S-charl_naar_Alp_Sesvenna._10-09-2019._%28d.j.b%29_25.jpg/500px-Bergtocht_van_S-charl_naar_Alp_Sesvenna._10-09-2019._%28d.j.b%29_25.jpg", "https://commons.wikimedia.org/wiki/File:Bergtocht_van_S-charl_naar_Alp_Sesvenna._10-09-2019._(d.j.b)_25.jpg"],
+  "Trasvase fluvial": ["https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fc/Trasvase_Tajo-Segura_por_Albacete.jpg/500px-Trasvase_Tajo-Segura_por_Albacete.jpg", "https://commons.wikimedia.org/wiki/File:Trasvase_Tajo-Segura_por_Albacete.jpg"]
 };
 
 // Definiciones tal cual las dio la profesora (no modificar).
@@ -506,6 +543,46 @@ const ENG_DEFS = [
   ["Unidad 6 (trad. de Claude)", "tell off", "regañar, reñir"]
 ].map(([group, concept, definition], id) => ({ id, group, concept, definition }));
 
+// Geografía, segundo examen: Tema clima y Tema agua y red hidrográfica
+const GEO2_DEFS = [
+  ["Tema clima", "Amplitud térmica", "diferencia entre la temperatura más elevada y la más baja registrada en un lugar, durante un período determinado"],
+  ["Tema clima", "Anticiclón", "centro de altas presiones, por encima de los 1.013 mb. Produce tiempo estable."],
+  ["Tema clima", "Aridez", "insuficiencia de agua en el suelo y en la atmósfera producida cuando la precipitación es inferior a la evaporación."],
+  ["Tema clima", "Barlovento", "ladera o vertiente orientada hacia el lugar de procedencia del viento. Aquí las precipitaciones son más abundantes"],
+  ["Tema clima", "Borrasca", "centro de bajas presiones, por debajo de 1.013 mb. Produce tiempo inestable."],
+  ["Tema clima", "Clima", "estado habitual de la atmósfera de un lugar durante un periodo prolongado de tiempo. Se caracteriza por la temperatura, la presión, la lluvia y el viento."],
+  ["Tema clima", "Continentalidad", "conjunto de características climáticas propias de las áreas alejadas de la influencia del mar"],
+  ["Tema clima", "Corriente en chorro", "flujo de aire rápido y estrecho que se mueve en la atmósfera a gran altitud. Se forma cuando el aire frío y el aire caliente se encuentran."],
+  ["Tema clima", "Depresión aislada en niveles altos", "(DANA) es un fenómeno meteorológico que se produce cuando un sistema de baja presión se separa de las corrientes atmosféricas."],
+  ["Tema clima", "Equinoccio", "momento del año en que el día y la noche tienen la misma duración en todo el planeta."],
+  ["Tema clima", "Frente polar", "superficie que separa las masas de aire frío polar del cálido de origen tropical, que entran en contacto en la zona templada."],
+  ["Tema clima", "Humedad atmosférica", "cantidad de vapor de agua que hay en el aire, y se expresa en gramos por metro cúbico"],
+  ["Tema clima", "Isobaras", "líneas que unen puntos de igual presión atmosférica"],
+  ["Tema clima", "Isotermas", "líneas que unen puntos de igual temperatura."],
+  ["Tema clima", "Isoyetas", "líneas que unen puntos de igual precipitación."],
+  ["Tema clima", "Precipitaciones", "caída de agua (lluvia, nieve, granizo o rocío) procedente de las nubes. Se mide en milímetros (mm) mediante el pluviómetro."],
+  ["Tema clima", "Presión atmosférica", "peso que ejerce el aire sobre una superficie. Se mide en milibares (mb) con el barómetro y se representa en los mapas mediante isobaras. La presión normal es de 1.013mb"],
+  ["Tema clima", "Régimen pluviométrico", "es el comportamiento de las lluvias a lo largo del año, es decir, la cantidad de precipitaciones que caen en un lugar determinado"],
+  ["Tema clima", "Régimen térmico", "Ritmo de variación de la temperatura a lo largo de un período de tiempo (día, mes año)."],
+  ["Tema clima", "Sequía", "período prolongado de tiempo en el que hay escasez de precipitaciones, lo que provoca una falta de agua"],
+  ["Tema clima", "Solana", "ladera o vertiente de una montaña o cordillera que recibe más radiación solar"],
+  ["Tema clima", "Solsticio", "momento del año en el que el Sol alcanza su mayor o menor altura aparente en el cielo, y la duración del día o de la noche son las máximas del año, respectivamente."],
+  ["Tema clima", "Tiempo atmosférico", "estado de la atmósfera sobre un lugar y en un momento determinado. Es cambiante respecto al clima."],
+  ["Tema clima", "Umbría", "vertiente de una montaña donde casi siempre hace sombra, por tanto recibe menor cantidad de radiación solar en relación con la solana"],
+  ["Tema agua y red hidrográfica", "Caudal de un río", "cantidad de agua que circula por el cauce de un río en un punto dado y en un momento determinado, se mide en metros cúbicos por segundo."],
+  ["Tema agua y red hidrográfica", "Ciclo hidrológico", "es el proceso de circulación del agua entre las distintas partes de la hidrosfera. Se trata de un ciclo en el que el agua circula de unos lugares a otros o cambia de estado físico."],
+  ["Tema agua y red hidrográfica", "Cuenca hidrográfica", "territorio cuyas aguas van a dar al mismo río y sus afluentes"],
+  ["Tema agua y red hidrográfica", "Estiaje", "caudal mínimo que presenta un lago, río o laguna y período en el que se produce."],
+  ["Tema agua y red hidrográfica", "Estuario", "desembocadura de un río en el mar, donde se mezclan las aguas dulces y saladas."],
+  ["Tema agua y red hidrográfica", "Meandro", "curva descrita por el curso de un río cuya sinuosidad es pronunciada y que es característica de las llanuras aluviales con pendiente muy escasa."],
+  ["Tema agua y red hidrográfica", "Red hidrográfica", "sistema de corrientes de agua que drenan una región. Se basa en una estructura lineal y jerarquizada que garantiza el drenaje de una zona"],
+  ["Tema agua y red hidrográfica", "Régimen fluvial", "es la variación estacional que sufre el caudal de un río, depende de la distribución de las precipitaciones y de si nieva o no. Puede ser régimen nival, pluvial o mixto"],
+  ["Tema agua y red hidrográfica", "Ría", "accidente geográfico que se forma cuando el mar inunda un valle fluvial cercano a la costa"],
+  ["Tema agua y red hidrográfica", "Río", "corriente de agua dulce que fluye normalmente por la superficie terrestre en dirección a un valle, procedente de la lluvia y del deshielo de la nieve de las montañas"],
+  ["Tema agua y red hidrográfica", "Torrente", "cursos intermitentes que sólo llevan agua cuando llueve. Suelen estar en zonas montañosas, con fuertes pendientes y gran capacidad erosiva."],
+  ["Tema agua y red hidrográfica", "Trasvase fluvial", "traslado de agua de un río hacia otro para aprovisionar de agua de regadío, uso industrial o agua potable al río receptor"]
+].map(([group, concept, definition], id) => ({ id, group, concept, definition, pic: PICS[concept] }));
+
 // Lengua: recursos expresivos, [apartado, recurso, definición, ejemplo] tal cual aparecen en la tabla
 const LEN_DEFS = [
   ["Recursos expresivos", "Cambio de registro", "Uso de un registro diferente al usual del texto", "Por fin vi Barbie y es una castaña (El País, 13/01/24)"],
@@ -536,6 +613,7 @@ const LEN_DEFS = [
 
 let DEFS = GEO_DEFS;
 const SUBJECTS = {
+  geo2: { title: "GEOGRAFÍA — DEFINICIONES (2.º EXAMEN)", topics: [["all", "Mezclar ambos"], ["Tema clima", "Clima"], ["Tema agua y red hidrográfica", "Agua y red hidrográfica"]] },
   len: { title: "LENGUA — RECURSOS EXPRESIVOS", topics: [["all", "Todos los recursos"]] },
   geo: { title: "GEOGRAFÍA — DEFINICIONES", topics: [["all", "Mezclar ambos"], ["Generales", "Generales"], ["Tema relieve", "Relieve"]] },
   eng: { title: "VOCABULARIO INGLÉS — TEMA 1", topics: [["all", "Mezclar todo"], ["Preposiciones", "Preposiciones"], ["Glosario", "Glosario"], ["Cultural Interaction", "Cultural Interaction"], ["Skills Booster", "Skills Booster"], ["Unidad 6 (trad. de Claude)", "Unidad 6 (trad. de Claude)"]] }
@@ -559,7 +637,7 @@ function capture() { STORE.subject = S.subject; STORE.common = pick(S, COMMON); 
 
 function applySubject(k) {
   S.subject = k;
-  DEFS = k === "eng" ? ENG_DEFS : k === "len" ? LEN_DEFS : GEO_DEFS;
+  DEFS = k === "eng" ? ENG_DEFS : k === "len" ? LEN_DEFS : k === "geo2" ? GEO2_DEFS : GEO_DEFS;
   const blank = { queue: [], idx: 0, ok: 0, bad: 0, time: 0, timedN: 0, res: {}, last: null, done: false };
   const saved = STORE.per[k] || {};
   Object.assign(S, { ok: 0, bad: 0, failed: [], right: [], hard: [], onlyFailed: false, topic: "all" }, saved);
@@ -687,7 +765,7 @@ function renderStats() {
   $("btn-pics").classList.toggle("on", S.showPics);
   $("btn-pics").textContent = "Fotos: " + (S.showPics ? "sí" : "no");
   document.querySelectorAll("[data-subj]").forEach(b => b.classList.toggle("on", b.dataset.subj === S.subject));
-  $("btn-pics").classList.toggle("hidden", S.subject !== "geo");
+  $("btn-pics").classList.toggle("hidden", !DEFS.some(d => d.pic));
   $("btn-dir").classList.toggle("hidden", !isEng());
   $("btn-dir").textContent = "Dirección: " + (S.dir === "en-es" ? "inglés → español" : "español → inglés");
   $("btn-time").classList.toggle("on", S.timed);
